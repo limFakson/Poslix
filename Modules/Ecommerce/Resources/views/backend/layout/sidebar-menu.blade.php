@@ -1,0 +1,13 @@
+<li><a href="{{route('slider.index')}}">{{trans('file.Sliders')}}</a></li>
+<li><a href="{{route('menu.index')}}">{{trans('file.Menu')}}</a></li>
+<li><a href="{{route('collection.index')}}">{{trans('file.Collections')}}</a></li>
+<li><a href="{{route('page.index')}}">{{trans('file.Pages')}}</a></li>
+<li><a href="{{route('widget.index')}}">{{trans('file.Widgets')}}</a></li>
+<li><a href="{{route('faq.category.index')}}">{{trans('file.Faq Category')}}</a></li>
+<li><a href="{{route('faq.index')}}">{{trans('file.Faqs')}}</a></li>
+<li><a href="{{route('social.links')}}">{{trans('file.Social Links')}}</a></li>
+<li><a href="{{route('blog.post')}}">{{trans('file.Blog')}}</a></li>
+<li><a href="{{route('setting.ecommerce.gateway')}}">{{trans('file.Payment Gateways')}}</a></li>
+<li><a href="{{route('show.qr.form')}}"> {{trans('file.QR Code')}}</a></li>
+<li><a href="{{route('appearance.design')}}"> {{trans('file.Appearance')}}</a></li>
+<li><a href="{{route('setting.ecommerce')}}">{{trans('file.Settings')}}</a></li>

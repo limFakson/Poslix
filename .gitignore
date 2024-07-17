@@ -1,0 +1,50 @@
+# Node modules
+/node_modules
+
+# Laravel specific
+/public/hot
+/storage/*.key
+/vendor
+/public/vendor
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.backup
+
+# PHPUnit
+.phpunit.result.cache
+
+# Vagrant files
+Homestead.json
+Homestead.yaml
+
+# Archives
+*.zip
+*.rar
+*.csv
+*.pdf
+*.docx
+*.doc
+*.txt
+
+# SQL files
+*.sql
+
+# Image files
+*.png
+*.jpg
+*.jpeg
+
+# Executable files
+*.exe
+
+#backups
+*.php_backup
