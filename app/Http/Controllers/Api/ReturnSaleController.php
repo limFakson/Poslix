@@ -203,6 +203,7 @@ class ReturnSaleController extends Controller
             }
 
             $returnid = DB::connection('tenant')->table('returns')->insertGetId($createData);
+            DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])->update(['sale_status'=> 4]);
 
             $Return = ["data" => $createData];
             $responseForReturn = ["Return:" => $Return, "Product_Return:"=>$Productreturns];
@@ -428,6 +429,7 @@ class ReturnSaleController extends Controller
         }
 
         DB::connection('tenant')->table('returns')->where('id', $id)->update($updateData);
+        DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])->update(['sale_status'=> 4]);
 
         // Step 5: Return updated sale and product sale information
         $return = DB::connection('tenant')->table('returns')
@@ -437,8 +439,8 @@ class ReturnSaleController extends Controller
         ->where('return_id',$id)
         ->get();
 
-        $saleResources = new ReturnSaleResource($data);
-        $productSaleResources = new ProductReturnsCollection($product_sale);
+        $saleResources = new ReturnSaleResource($return);
+        $productSaleResources = new ProductReturnsCollection($product_returns);
 
         return response()->json([
             'sale' => $saleResources,
