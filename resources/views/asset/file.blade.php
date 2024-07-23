@@ -63,4 +63,12 @@
         @endif
     </main>
 </body>
+<script src="{{ url('js/app.js') }}"></script>
+<script>
+    window.Echo.channel('Sale')
+    .listen('Sale', (e) => {
+        console.log(e.message);
+    });
+
+</script>
 </html>

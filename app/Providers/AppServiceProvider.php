@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use DB;
 use Illuminate\Support\Facades\URL;
+use App\Models\Sale;
+use App\Observers\SaleObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         // Schema::defaultStringLength(191);
+        Sale::observe(SaleObserver::class);
     }
 }

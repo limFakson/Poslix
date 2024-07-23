@@ -23,11 +23,14 @@ class ProductResource extends JsonResource
             'unitId' =>$this ->unit_id,
             'cost' =>$this ->cost,
             'price' =>$this ->price,
+            'price1' =>$this ->price1,
+            'price2' =>$this ->price2,
+            'price3' =>$this ->price3,
             'image' => config('app.url').'/images/product/'.$this-> image ?? null,
             'taxMethod' =>$this ->tax_method??null,
             'taxName' =>$this ->tax_name??null,
             'taxRate' =>$this ->tax_rate??null,
-            'warehouseQty'=>$this->warehouse_qty
+            // 'warehouseQty'=>$this->warehouse_qty
         ];
     }
 }

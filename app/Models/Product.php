@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable =[
-        "name", "second_name", "code", "type", "slug", "barcode_symbology", "user_id", "brand_id", "category_id", "unit_id", "purchase_unit_id", "sale_unit_id", "cost", "price", "qty", "alert_quantity", "daily_sale_objective", "promotion", "promotion_price", "starting_date", "last_date", "tax_id", "tax_method", "image", "file", "is_embeded", "is_batch", "is_variant", "is_diffPrice", "is_imei", "featured", "product_list", "variant_list", "qty_list", "price_list", "product_details", "short_description", "specification", "related_products", "variant_option", "variant_value", "is_active", "is_online", "in_stock", "is_sync_disable", "woocommerce_product_id","woocommerce_media_id","tags","meta_title","meta_description"
+        "name", "second_name", "code", "type", "slug", "barcode_symbology", "user_id", "brand_id", "category_id", "unit_id", "purchase_unit_id", "sale_unit_id", "cost", "price", "price1", "price2", "price3", "qty", "alert_quantity", "daily_sale_objective", "promotion", "promotion_price", "starting_date", "last_date", "tax_id", "tax_method", "image", "file", "is_embeded", "is_batch", "is_variant", "is_diffPrice", "is_imei", "featured", "product_list", "variant_list", "qty_list", "price_list", "product_details", "short_description", "specification", "related_products", "variant_option", "variant_value", "is_active", "is_online", "in_stock", "is_sync_disable", "woocommerce_product_id","woocommerce_media_id","tags","meta_title","meta_description"
     ];
 
     public function category()

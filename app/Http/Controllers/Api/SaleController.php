@@ -11,6 +11,7 @@ use App\Http\Resources\Api\SaleCollection;
 use App\Http\Requests\StoreSaleRequest;
 use App\Http\Resources\Api\ProductSalesCollection;
 use Illuminate\Http\Request;
+use App\Events\Sale as SaleEvent;
 
 class SaleController extends Controller
 {
@@ -54,6 +55,7 @@ class SaleController extends Controller
 
         $saleResources = new SaleCollection($sales);
         $productSaleResources = new ProductSalesCollection($productSales);
+
         return Response()->json([
             'sales'=>$saleResources,
             'products_sale'=>$productSaleResources
@@ -239,7 +241,7 @@ class SaleController extends Controller
                 $ProductSales[] = ["data"=>$commonData];
             }
 
-            $saleid = DB::connection('tenant')->table('sales')->insertGetId($createData);
+            $sale = DB::connection('tenant')->table('sales')->insert($createData);
 
             $accountId =DB::connection('tenant')->table('accounts')->where('is_active', true)->first();
 
@@ -262,11 +264,11 @@ class SaleController extends Controller
             ];
             $payment = DB::connection('tenant')->table('payments')->insert($paymentData);
 
-            $Sale = ["data" => $createData];
-            $responseForSale = ["Sale:" => $Sale, "Product_Sale:"=>$ProductSales, "Payment_data:"=>$paymentData];
+            $sale = ["data" => $createData];
+            event(new SaleEvent($sale));
+            $responseForSale = ["Sale:" => $sale, "Product_Sale:"=>$ProductSales, "Payment_data:"=>$paymentData];
             $processedSales[] = $responseForSale;
         }
-
 
         return response()->json($processedSales, 201);
         // return new SaleResource(Sale::create($request->all()));

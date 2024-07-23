@@ -17,13 +17,14 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $tenantId = $request->input('tenant_id');
-        $warehouseId = $request->input('warehouse_id');
+        // $warehouseId = $request->input('warehouse_id');
         $tenant = Tenant::find($tenantId);
         if (!$tenant){
             return response()->json(["message"=> "Tenant not found"], 404);
-        }else if(!$warehouseId){
-            return response(["message"=>"Warehouse id needed"], 500);
         }
+        // else if(!$warehouseId){
+        //     return response(["message"=>"Warehouse id needed"], 500);
+        // }
         // Connected to the tenant database
         $tenancyDb = $tenant->tenancy_db_name;
 
@@ -37,23 +38,21 @@ class ProductController extends Controller
         DB::purge('tenant');
         DB::reconnect('tenant');
 
-        $warehouse = DB::connection('tenant')->table('warehouses')->where('id', $warehouseId)->first();
-        if(!$warehouse){
-            return response(["message"=>"Warehosue not found"], 404);
-        }
+        // $warehouse = DB::connection('tenant')->table('warehouses')->where('id', $warehouseId)->first();
+        // if(!$warehouse){
+        //     return response(["message"=>"Warehosue not found"], 404);
+        // }
 
         $products = DB::connection('tenant')->table('products')
         ->leftjoin('taxes', 'products.tax_id', '=', 'taxes.id')
-        ->leftjoin('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
+        // ->leftjoin('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
         ->select(
             'products.*',
             'taxes.name as tax_name',
             'taxes.rate as tax_rate',
-            'taxes.is_active as tax_is_active',
-            'product_warehouse.warehouse_id as warehouse_id',
-            'product_warehouse.qty as warehouse_qty'
+            'taxes.is_active as tax_is_active'
         )
-        ->where('warehouse_id', $warehouseId)
+        // ->where('warehouse_id', $warehouseId)
         ->where('products.is_active', true)
         ->get();
         $product_varients = DB::connection('tenant')->table('product_variants')->get();

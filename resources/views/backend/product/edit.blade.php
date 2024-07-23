@@ -31,7 +31,7 @@
 
             <h1 class="page-header-title">{{trans('file.Update Product')}}</h1>
 
-            
+
           </div>
           <!-- End Col -->
         </div>
@@ -50,7 +50,7 @@
                 <h4 class="card-header-title">Product information</h4>
               </div>
               <!-- End Header -->
-  
+
               <!-- Body -->
               <div class="card-body">
                 <p>{{ trans('file.The field labels marked with * are required input fields') }}.</p>
@@ -75,13 +75,13 @@
                         <label>{{trans('file.Product Name')}} *</strong> </label>
                                         <input type="text" name="name" value="{{$lims_product_data->name}}" required class="form-control">
                                         <span class="validation-msg" id="name-error"></span>
-        
+
                       </div>
                     </div>
                  </div>
-               
+
                 <!-- End Form -->
-  
+
                 <div class="row">
                   <div class="col-sm-6">
                     <div class="mb-4">
@@ -89,7 +89,7 @@
                                         <input type="text" name="sec-name" class="form-control" id="sec-name"
                                         value="{{$lims_product_data->second_name}}">
                                         <span class="validation-msg" id="name-error"></span>
-      
+
                     </div>
                   </div>
                   <div class="col-sm-6">
@@ -196,7 +196,7 @@
                     </div>
                   </div>
 
-                 
+
 
                   <div class="col-sm-12" id="unit">
                     <div class="mb-4">
@@ -236,41 +236,41 @@
                     </div>
                   </div>
 
-                  
 
-                 
+
+
                 </div>
                 <!-- End Row -->
-  
+
                 <label>{{trans('file.Product Details')}}</label>
                                         <textarea name="product_details" class="form-control" rows="5">{{str_replace('@', '"', $lims_product_data->product_details)}}</textarea>
               </div>
               <!-- Body -->
             </div>
             <!-- End Card -->
-  
+
             <!-- Card -->
             <div class="card mb-3 mb-lg-5">
               <!-- Header -->
               <div class="card-header card-header-content-between">
                 <h4 class="card-header-title">Media</h4>
-  
-                
+
+
               </div>
               <!-- End Header -->
-  
+
               <!-- Body -->
               <div class="card-body">
                 <!-- Dropzone -->
                 <div  id="imageUpload" class="js-dropzone dz-dropzone dz-dropzone-card">
                   <div class="dz-message">
                     <!--<img class="avatar avatar-xl avatar-4x3 mb-3" src="{{ asset('oc-browse.svg')}}" alt="Image Description" data-hs-theme-appearance="default">-->
-  
+
                     <center>
                         <h5>Drag and drop your file here</h5>
-  
+
                     <p class="mb-2">or</p>
-  
+
                     <span class="btn btn-white btn-sm">Browse files</span>
                     </center>
                   </div>
@@ -311,7 +311,7 @@
               <!-- Body -->
             </div>
             <!-- End Card -->
-  
+
             <!-- Card -->
             <div class="card">
               <!-- Header -->
@@ -319,11 +319,11 @@
                 <h4 class="card-header-title">Variants</h4>
               </div>
               <!-- End Header -->
-  
+
               <!-- Body -->
               <div class="card-body">
                 <div class="row">
-                    
+
                                 <div class="col-md-6">
                                     <div class="form-group mt-3">
                                          @if($lims_product_data->featured)
@@ -345,7 +345,7 @@
                                         <label>{{trans('file.Embedded Barcode')}} <i class="dripicons-question" data-toggle="tooltip" title="{{trans('file.Check this if this product will be used in weight scale machine.')}}"></i></label>
                                     </div>
                                 </div>
-                                 
+
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-12 mt-2" id="diffPrice-option">
@@ -510,16 +510,16 @@
             <!-- End Card -->
           </div>
           <!-- End Col -->
-  
+
           <div class="col-lg-4">
             <!-- Card -->
-            <div class="card mb-3 mb-lg-5">
+             <div class="card mb-3 mb-lg-5">
               <!-- Header -->
               <div class="card-header">
                 <h4 class="card-header-title">Pricing</h4>
               </div>
               <!-- End Header -->
-  
+
               <!-- Body -->
               <div class="card-body">
                 <!-- Form -->
@@ -541,6 +541,19 @@
                                     </div>
                 </div>
 
+
+                <div class="mb-4">
+                  <label class="form-label ">Price 1</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
+                  <input type="number" name="price1" value="{{ $lims_product_data->customer_sale_price }}" class="form-control" step="any">
+                </div>
+               <div class="mb-4">
+                  <label class="form-label ">Price 2</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
+                  <input type="number" name="price2" class="form-control" value="{{ $lims_product_data->student_sale_price }}" step="any">
+                </div>
+                <div class="mb-4">
+                  <label class="form-label ">Price 3</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
+                  <input type="number" name="price3" class="form-control" value="{{ $lims_product_data->vip_sale_price }}" step="any">
+                </div>
                 <div class="mb-4">
                   <label class="form-label ">{{trans('file.Daily Sale Objective')}}</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
                                                           <input type="number" name="daily_sale_objective" class="form-control" step="any" value="{{$lims_product_data->daily_sale_objective}}">
@@ -573,17 +586,21 @@
                                             <option value="2">{{trans('file.Inclusive')}}</option>
                                         </select>
                 </div>
-  
-              
-  
-                
-  
-                
+
+
+
+
+
+
               </div>
               <!-- Body -->
             </div>
+
+
+
+
             <!-- End Card -->
-  
+
             <!-- Card -->
             <div class="card">
               <!-- Header -->
@@ -591,7 +608,7 @@
                 <h4 class="card-header-title">Organization</h4>
               </div>
               <!-- End Header -->
-  
+
               <!-- Body -->
               <div class="card-body">
 
@@ -619,15 +636,15 @@
                                           </select>
                                       </div>
                 </div>
-               
-  
-               
-  
+
+
+
+
                 <!-- Form -->
                 <div class="mb-4">
                   @if($extraCategories)
-                                
-                                
+
+
                                 <div class="form-group col-12">
                                     <label>{{ trans('Extra Categories') }} </strong> </label>
                                     <div class="input-group">
@@ -645,7 +662,7 @@
                                  </div>
                 </div>
                 <!-- Form -->
-                        
+
                 @foreach ($custom_fields as $field)
                                     @if (!$field->is_admin || \Auth::user()->role_id == 1)
                                         <div class="{{ 'col-md-' . $field->grid_value }}">
@@ -726,22 +743,23 @@
                                         </div>
                                     @endif
                                 @endforeach
-               
+
               </div>
-              
+
               <!-- Body -->
-            </div>
+            <!--</div>-->
             <!-- End Card -->
           </div>
           <!-- End Col -->
-        </div>
-         <div class="form-group mt-3">
+          <div class="form-group mt-3 ml-3">
                                  <button class="btn btn-primary" type="submit" id="submit-btn">{{trans('file.submit')}}</button>
                             </div>
+        </div>
+
       </form>
       <!-- End Row -->
 
-      
+
     </div>
 </section>
 

@@ -5,11 +5,14 @@ namespace App\Http\Controllers\landlord;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\landlord\app;
+use App\Events\Sale;
 
 class UploadController extends Controller
 {
     //
     public function index(){
+        $sale ="Guood";
+        event(new Sale($sale));
         return view('asset.file');
     }
 

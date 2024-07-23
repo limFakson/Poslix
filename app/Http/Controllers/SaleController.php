@@ -69,6 +69,7 @@ use Salla\ZATCA\Tags\InvoiceTotalAmount;
 use Salla\ZATCA\Tags\Seller;
 use Salla\ZATCA\Tags\TaxNumber;
 use Twilio\Rest\Client;
+use App\Events\Sale as SaleEvent;
 
 class SaleController extends Controller
 {
@@ -585,6 +586,8 @@ class SaleController extends Controller
             $data['order_type'] = "Pickup";
             $data['sale_type'] = "WebPos";
             $lims_sale_data = Sale::create($data);
+            $sale = $lims_sale_data;
+            event(new SaleEvent($sale));
             //inserting data for custom fields
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'sale')->select('name', 'type')->get();
