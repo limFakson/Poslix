@@ -62,7 +62,7 @@ Route::get('tenant/user/{id}', [UserController::class, 'tenantuser']);
 Route::get('product/bycategory/{category_id}', [ProductController::class, 'showByCategoryId']);
 Route::get('menu/product/', [ProductController::class, 'menu_products']);
 Route::get('customer/byuser/{user_id}', [CustomerController::class, 'showByUserId']);
-Route::get('sale/byuser/{user_id}', [SaleController::class, 'showByUserId']);
+Route::delete('sale/product-sale/{id}', [SaleController::class, 'destroyProductSale']);
 
 Route::get('menu-setting', [PosSettingsController::class, 'menu_settings']);
 

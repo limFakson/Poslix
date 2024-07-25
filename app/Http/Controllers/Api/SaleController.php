@@ -264,7 +264,7 @@ class SaleController extends Controller
             ];
             $payment = DB::connection('tenant')->table('payments')->insert($paymentData);
 
-            $sale = ["data" => $createData];
+            $sale = $createData;
             event(new SaleEvent($sale));
             $responseForSale = ["Sale:" => $sale, "Product_Sale:"=>$ProductSales, "Payment_data:"=>$paymentData];
             $processedSales[] = $responseForSale;
@@ -517,14 +517,14 @@ class SaleController extends Controller
                 $productWarehouse = DB::connection('tenant')->table('product_warehouse')
                 ->where('warehouse_id', $saleData['warehouseId'])
                 ->where('product_id', $data['productId'])
-                ->where('variant_id', $data['varientId'])
+                ->where('variant_id', $data['variantId'])
                 ->first();
 
                 if ($productWarehouse) {
                     DB::connection('tenant')->table('product_warehouse')
                         ->where('warehouse_id', $saleData['warehouseId'])
                         ->where('product_id', $data['productId'])
-                        ->where('variant_id', $data['varientId'])
+                        ->where('variant_id', $data['variantId'])
                         ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
                 }
             } else {
@@ -572,6 +572,8 @@ class SaleController extends Controller
             )
             ->where('sales.id', $saleId)
             ->first();
+        $sale = $data;
+        event(new SaleEvent($sale));
 
         $product_sale = DB::connection('tenant')->table('product_sales')
             ->leftjoin('products', 'product_sales.product_id', '=', 'products.id')
@@ -591,10 +593,201 @@ class SaleController extends Controller
         ], 201);
     }
 
+    public function destroyProductSale(Request $request, $id){
+        $tenantId = $request->input('tenant_id');
+        $tenant = Tenant::find($tenantId);
+        if (!$tenant) {
+            return response()->json(["message" => "Tenant not found"], 400);
+        }
 
-    public function destroy($sale)
+        // Connected to the tenant database
+        $tenancyDb = $tenant->tenancy_db_name;
+
+        config(['database.connections.tenant' => [
+            'driver' => 'mysql',
+            'host' => 'localhost',
+            'database' => $tenancyDb,
+            'username' => config('app.db_username'),
+            'password' => config('app.db_password'),
+        ]]);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+
+        $product_sale = DB::connection('tenant')->table('product_sales')
+        ->where('id', $id)
+        ->first();
+
+        if (!$product_sale) {
+            return response()->json(["message" => "Product sale not found"], 404);
+        }
+
+        $productId = $product_sale->product_id;
+        $quantityDifference = $product_sale->qty;
+        if(isset($product_sale->varient_id)){
+            $varientId = $product_sale->varient_id;
+        };
+
+        $sale = DB::connection('tenant')->table('sales')
+        ->where('id', $product_sale->sale_id)
+        ->first();
+
+        // Update stock levels in Product Warehouse and Product/Variant
+        $product = DB::connection('tenant')->table('products')
+        ->where('id', $productId)
+        ->first();
+
+        if ($product) {
+            DB::connection('tenant')->table('products')
+                ->where('id', $productId)
+                ->update(['qty' => $product->qty - $quantityDifference]);
+        }
+
+        if (isset($varientId)) {
+            $productVariant = DB::connection('tenant')->table('product_variants')
+                ->where('product_id', $productId)
+                ->where('variant_id', $varientId)
+                ->first();
+
+            if ($productVariant) {
+                DB::connection('tenant')->table('product_variants')
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $varientId)
+                    ->update(['qty' => $productVariant->qty - $quantityDifference]);
+            }
+
+            $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+            ->where('warehouse_id', $sale->warehouse_id)
+            ->where('product_id', $productId)
+            ->where('variant_id', $varientId)
+            ->first();
+
+            if ($productWarehouse) {
+                DB::connection('tenant')->table('product_warehouse')
+                    ->where('warehouse_id', $sale->warehouse_id)
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $varientId)
+                    ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
+            }
+        } else {
+            $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+                ->where('warehouse_id', $sale->warehouse_id)
+                ->where('product_id', $productId)
+                ->first();
+
+            if ($productWarehouse) {
+                DB::connection('tenant')->table('product_warehouse')
+                    ->where('warehouse_id', $sale->warehouse_id)
+                    ->where('product_id', $productId)
+                    ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
+            }
+        }
+
+        $product_sale = DB::connection('tenant')->table('product_sales')
+            ->where('id', $id)->delete();
+
+        return response()->json(["message" => "Product sale successfully deleted"]);
+
+    }
+
+    public function destroy(Request $request, $saleId)
     {
+        $tenantId = $request->input('tenant_id');
+        $tenant = Tenant::find($tenantId);
+        if (!$tenant) {
+            return response()->json(["message" => "Tenant not found"], 400);
+        }
 
+        // Connect to the tenant database
+        $tenancyDb = $tenant->tenancy_db_name;
 
-   }
+        config(['database.connections.tenant' => [
+            'driver' => 'mysql',
+            'host' => 'localhost',
+            'database' => $tenancyDb,
+            'username' => config('app.db_username'),
+            'password' => config('app.db_password'),
+        ]]);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+
+        $sale = DB::connection('tenant')->table('sales')
+            ->where('id', $saleId)
+            ->first();
+
+        if (!$sale) {
+            return response()->json(["message" => "Sale not found"], 404);
+        }
+
+        $productSales = DB::connection('tenant')->table('product_sales')
+            ->where('sale_id', $saleId)
+            ->get();
+
+        foreach ($productSales as $productSale) {
+            $productId = $productSale->product_id;
+            $quantityDifference = $productSale->qty;
+
+            $product = DB::connection('tenant')->table('products')
+                ->where('id', $productId)
+                ->first();
+
+            if ($product) {
+                DB::connection('tenant')->table('products')
+                    ->where('id', $productId)
+                    ->update(['qty' => $product->qty - $quantityDifference]);
+            }
+
+            if (isset($productSale->varient_id)) {
+                $variantId = $productSale->varient_id;
+
+                $productVariant = DB::connection('tenant')->table('product_variants')
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->first();
+
+                if ($productVariant) {
+                    DB::connection('tenant')->table('product_variants')
+                        ->where('product_id', $productId)
+                        ->where('variant_id', $variantId)
+                        ->update(['qty' => $productVariant->qty - $quantityDifference]);
+                }
+
+                $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+                    ->where('warehouse_id', $sale->warehouse_id)
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->first();
+
+                if ($productWarehouse) {
+                    DB::connection('tenant')->table('product_warehouse')
+                        ->where('warehouse_id', $sale->warehouse_id)
+                        ->where('product_id', $productId)
+                        ->where('variant_id', $variantId)
+                        ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
+                }
+            } else {
+                $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+                    ->where('warehouse_id', $sale->warehouse_id)
+                    ->where('product_id', $productId)
+                    ->first();
+
+                if ($productWarehouse) {
+                    DB::connection('tenant')->table('product_warehouse')
+                        ->where('warehouse_id', $sale->warehouse_id)
+                        ->where('product_id', $productId)
+                        ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
+                }
+            }
+
+            DB::connection('tenant')->table('product_sales')
+                ->where('id', $productSale->id)
+                ->delete();
+        }
+
+        DB::connection('tenant')->table('sales')
+            ->where('id', $saleId)
+            ->delete();
+
+        return response()->json(["message" => "Sale successfully deleted"]);
+    }
+
 }
