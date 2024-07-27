@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Sale;
 use App\Events\Sale as SaleEvent;
+use Illuminate\Support\Facades\Config;
 
 class SaleObserver
 {
@@ -12,7 +13,8 @@ class SaleObserver
      */
     public function created(Sale $sale): void
     {
-        event(new SaleEvent($sale, 'created'));
+        $tenantId = Config::get('tenant_id');
+        event(new SaleEvent($sale, 'created', $tenantId));
     }
 
     /**
@@ -20,7 +22,8 @@ class SaleObserver
      */
     public function updated(Sale $sale): void
     {
-        event(new SaleEvent($sale, 'updated'));
+        $tenantId = Config::get('tenant_id');
+        event(new SaleEvent($sale, 'updated', $tenantId));
     }
 
     /**
@@ -28,7 +31,8 @@ class SaleObserver
      */
     public function deleted(Sale $sale): void
     {
-        event(new SaleEvent($sale, 'deleted'));
+        $tenantId = Config::get('tenant_id');
+        event(new SaleEvent($sale, 'deleted', $tenantId));
     }
 
     /**
@@ -36,7 +40,8 @@ class SaleObserver
      */
     public function restored(Sale $sale): void
     {
-        event(new SaleEvent($sale, 'restored'));
+        $tenantId = Config::get('tenant_id');
+        event(new SaleEvent($sale, 'restored', $tenantId));
     }
 
     /**
@@ -44,6 +49,7 @@ class SaleObserver
      */
     public function forceDeleted(Sale $sale): void
     {
-        event(new SaleEvent($sale, 'forceDeleted'));
+        $tenantId = Config::get('tenant_id');
+        event(new SaleEvent($sale, 'forceDeleted', $tenantId));
     }
 }

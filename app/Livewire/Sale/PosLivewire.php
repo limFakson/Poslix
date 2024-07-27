@@ -746,7 +746,7 @@ class PosLivewire extends Component
         // $imei_number = $data['imei_number'];
         // $product_code = $data['product_code'];
         // $qty = $data['qty'];
-        $sale_unit[] = 'n/a';
+        $sale_unit = [];
         $imei_number = [];
         // $net_unit_price = $data['net_unit_price'];
         // $discount = $data['discount'];
@@ -756,6 +756,7 @@ class PosLivewire extends Component
         $product_sale = [];
         foreach ($this->items as $i => $item) {
             $lims_product_data = Product::where('id', $item['product_id'])->first();
+            $sale_unit[] = $lims_product_data->sale_unit_id;
             $product_sale['variant_id'] = null;
             $product_sale['product_batch_id'] = null;
             if ($lims_product_data->type == 'combo' && $data['sale_status'] == 1) {
@@ -800,7 +801,7 @@ class PosLivewire extends Component
             }
 
             if (count($sale_unit) > 0 && isset($sale_unit[$i]) && $sale_unit[$i] != 'n/a') {
-                $lims_sale_unit_data  = Unit::where('unit_name', $sale_unit[$i])->first();
+                $lims_sale_unit_data  = Unit::where('id', $sale_unit[$i])->first();
                 $sale_unit_id = $lims_sale_unit_data->id;
                 if ($lims_product_data->is_variant) {
                     $lims_product_variant_data = ProductVariant::select('id', 'variant_id', 'qty')->FindExactProductWithCode($item['product_id'], $item['code'])->first();
@@ -823,7 +824,7 @@ class PosLivewire extends Component
                         $lims_product_variant_data->qty -= $quantity;
                         $lims_product_variant_data->save();
                         $lims_product_warehouse_data = Product_Warehouse::FindProductWithVariant($item['product_id'], $lims_product_variant_data->variant_id, $data['warehouse_id'])->first();
-                    } elseif ($item['product_batch_id']) {
+                    } elseif ($lims_product_data->is_batch && $item['product_batch_id']) {
                         $lims_product_warehouse_data = Product_Warehouse::where([
                             ['product_batch_id', $item['product_batch_id']],
                             ['warehouse_id', $data['warehouse_id']]
