@@ -587,7 +587,6 @@ class SaleController extends Controller
             $data['sale_type'] = "WebPos";
             $lims_sale_data = Sale::create($data);
             $sale = $lims_sale_data;
-            event(new SaleEvent($sale));
             //inserting data for custom fields
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'sale')->select('name', 'type')->get();

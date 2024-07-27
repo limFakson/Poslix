@@ -83,6 +83,7 @@ return [
 	'Unit Cost' => 'Unit Cost',
 	'Unit Price' => 'Unit Price',
 	'Net Unit Cost' => 'Net Unit Cost',
+    'Avg Unit Cost' => 'Avg Unit Cost',
 	'Net Unit Price' => 'Net Unit Price',
 	'Shipping Cost' => 'Shipping Cost',
 	'Subtotal' => 'SubTotal',

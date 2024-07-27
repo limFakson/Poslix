@@ -232,11 +232,11 @@ class ProductController extends Controller
                             </li>' . \Form::close();
                 if (in_array("print_barcode", $request['all_permission'])) {
                     $product_info = $product->code . ' (' . $product->name . ')';
-                    $nestedData['options'] .= \Form::open(["route" => "product.printBarcode", "method" => "GET"]) . '
+                    $nestedData['options'] .= '
                         <li>
                             <input type="hidden" name="data" value="' . $product_info . '" />
-                            <button type="submit" class="btn btn-link"><i class="dripicons-print"></i> ' . trans("file.print_barcode") . '</button>
-                        </li>' . \Form::close();
+                            <button type="submit" data-target="#productBarcode" data-toggle="modal" class="btn btn-link barcode"><i class="dripicons-print"></i> ' . trans("file.print_barcode") . '</button>
+                        </li>' ;
                 }
                 if (in_array("products-delete", $request['all_permission']))
                     $nestedData['options'] .= \Form::open(["route" => ["products.destroy", $product->id], "method" => "DELETE"]) . '
@@ -389,6 +389,16 @@ class ProductController extends Controller
         if (!isset($data['is_sync_disable']) && \Schema::hasColumn('products', 'is_sync_disable'))
             $data['is_sync_disable'] = null;
         //return $data;
+        if(!isset($data['price1'])){
+            $data['price1'] = 0;
+        }
+        if(!isset($data['price2'])){
+            $data['price2'] = 0;
+        }
+        if(!isset($data['price3'])){
+            $data['price3'] = 0;
+        }
+
         $lims_product_data = Product::create($data);
         //inserting custom field data
         $custom_field_data = [];
@@ -1374,7 +1384,12 @@ class ProductController extends Controller
 
     public function limsProductSearch(Request $request)
     {
-        $product_code = explode("(", $request['data']);
+        if (strpos($request['data'], '(') !== false) {
+            $product_code = explode("(", $request['data']);
+        } else {
+            $product_code = $request['data'];
+            $product_code = array($product_code);
+        }
         $product_code[0] = rtrim($product_code[0], " ");
         $lims_product_data = Product::where([
             ['code', $product_code[0]],

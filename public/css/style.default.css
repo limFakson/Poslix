@@ -2581,3 +2581,27 @@ a>code {
 .dark-mode .right-sidebar li {
     border-bottom: 1px solid #3b4253
 }
+
+.print_barcode_drop_down {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, .1);
+}
+
+.drop_down {
+    background-color: #f3f3f3;
+    width: 52rem;
+    border-radius: 8px;
+}
+
+.drop_down .top {
+    background-color: #32918a;
+    height: 2.4rem;
+    padding: 5px;
+    position: relative;
+}

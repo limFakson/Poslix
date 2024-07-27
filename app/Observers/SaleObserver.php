@@ -12,7 +12,7 @@ class SaleObserver
      */
     public function created(Sale $sale): void
     {
-        event(new SaleEvent($sale));
+        event(new SaleEvent($sale, 'created'));
     }
 
     /**
@@ -20,7 +20,7 @@ class SaleObserver
      */
     public function updated(Sale $sale): void
     {
-        //
+        event(new SaleEvent($sale, 'updated'));
     }
 
     /**
@@ -28,7 +28,7 @@ class SaleObserver
      */
     public function deleted(Sale $sale): void
     {
-        //
+        event(new SaleEvent($sale, 'deleted'));
     }
 
     /**
@@ -36,7 +36,7 @@ class SaleObserver
      */
     public function restored(Sale $sale): void
     {
-        //
+        event(new SaleEvent($sale, 'restored'));
     }
 
     /**
@@ -44,6 +44,6 @@ class SaleObserver
      */
     public function forceDeleted(Sale $sale): void
     {
-        //
+        event(new SaleEvent($sale, 'forceDeleted'));
     }
 }

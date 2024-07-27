@@ -73,7 +73,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                    </div> 
+                                    </div>
                                     <div class="col-md-2">
                                         <div class="form-group mb-0">
                                             <label>{{trans('file.Exchange Rate')}} *</label>
@@ -157,6 +157,7 @@
                                                         <th>{{trans('file.Batch No')}}</th>
                                                         <th>{{trans('file.Expired Date')}}</th>
                                                         <th>{{trans('file.Net Unit Cost')}}</th>
+                                                        <th>{{trans('file.Avg Unit Cost')}}</th>
                                                         <th>{{trans('file.Discount')}}</th>
                                                         <th>{{trans('file.Tax')}}</th>
                                                         <th>{{trans('file.Subtotal')}}</th>
@@ -169,6 +170,7 @@
                                                     <th colspan="2">{{trans('file.Total')}}</th>
                                                     <th id="total-qty">0</th>
                                                     <th class="recieved-product-qty d-none"></th>
+                                                    <th></th>
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -336,6 +338,8 @@
             </div>
         </div>
     </div>
+    <input type="hidden" id="oldStockQty" name="oldStockQty" />
+    <input type="hidden" id="oldUnitCost" name="oldUnitCost" />
 </section>
 
 @endsection
@@ -431,7 +435,7 @@
                 $productArray[] = htmlspecialchars($product->item_code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name));
             ?>
         @endforeach
-        
+
         <?php
             echo  '"'.implode('","', $productArray).'"';
         ?>
@@ -599,6 +603,12 @@
                 data: data
             },
             success: function(data) {
+                const oldStockQty = data[12];
+                const oldUnitCost = data[2];
+
+                // Set the values in the hidden inputs
+                $('#oldStockQty').val(oldStockQty);
+                $('#oldUnitCost').val(oldUnitCost);
                 var flag = 1;
                 $(".product-code").each(function(i) {
                     if ($(this).val() == data[1]) {
@@ -636,6 +646,7 @@
                     }
 
                     cols += '<td class="net_unit_cost"></td>';
+                    cols += '<td class="avg_unit_cost"></td>';
                     cols += '<td class="discount">{{number_format(0, $general_setting->decimal, '.', '')}}</td>';
                     cols += '<td class="tax"></td>';
                     cols += '<td class="sub-total"></td>';
@@ -718,7 +729,29 @@
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.subtotal-value').val(sub_total.toFixed({{$general_setting->decimal}}));
         }
 
+        //new net unit cost
+        let newStockQty = parseInt(quantity);
+        let newUnitCost = parseInt(net_unit_cost);
+        calculateAvgUnitCost(newStockQty, newUnitCost)
         calculateTotal();
+    }
+
+    function calculateAvgUnitCost(newStockQty, newUnitCost) {
+        var oldStockQty = parseInt($('#oldStockQty').val());
+        var oldUnitCost = parseInt($('#oldUnitCost').val());
+
+        let oldStockTotalCost = oldStockQty * oldUnitCost;
+
+        let newStockTotalCost = newStockQty * newUnitCost;
+
+        let totalStockQty = oldStockQty + newStockQty;
+
+        let totalCost = oldStockTotalCost + newStockTotalCost;
+
+        let avgUnitCost = totalCost / totalStockQty;
+
+        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.avg_unit_cost').text(avgUnitCost.toFixed({{$general_setting->decimal}}));
+        return avgUnitCost;
     }
 
     function unitConversion() {

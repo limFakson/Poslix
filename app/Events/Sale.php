@@ -6,38 +6,36 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class Sale implements ShouldBroadcastNow
+class Sale implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $sale;
+    public $saleData;
+    public $method;
+    public $tenantId;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct($sale)
+    public function __construct($saleData, $method, $tenantId)
     {
-        $this->sale = $sale;
+        $this->saleData = $saleData;
+        $this->method = $method;
+        $this->tenantId = $tenantId;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
-    public function broadcastOn(): array
+    public function broadcastOn()
+    {
+        return new Channel('sales');
+    }
+
+    public function broadcastWith()
     {
         return [
-            new Channel('Sale'),
+            'method' => $this->method,
+            'tenantId' => $this->tenantId,
+            'sale' => $this->saleData
         ];
-    }
-
-    public function broadcastWith(): array
-    {
-        return ['sale' => $this->sale];
     }
 }

@@ -544,15 +544,15 @@
 
                 <div class="mb-4">
                   <label class="form-label ">Price 1</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
-                  <input type="number" name="price1" value="{{ $lims_product_data->customer_sale_price }}" class="form-control" step="any">
+                  <input type="number" name="price1" value="{{ $lims_product_data->price1 }}" class="form-control" step="any">
                 </div>
                <div class="mb-4">
                   <label class="form-label ">Price 2</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
-                  <input type="number" name="price2" class="form-control" value="{{ $lims_product_data->student_sale_price }}" step="any">
+                  <input type="number" name="price2" class="form-control" value="{{ $lims_product_data->price2 }}" step="any">
                 </div>
                 <div class="mb-4">
                   <label class="form-label ">Price 3</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>
-                  <input type="number" name="price3" class="form-control" value="{{ $lims_product_data->vip_sale_price }}" step="any">
+                  <input type="number" name="price3" class="form-control" value="{{ $lims_product_data->price3 }}" step="any">
                 </div>
                 <div class="mb-4">
                   <label class="form-label ">{{trans('file.Daily Sale Objective')}}</strong></label> <i class="fa-regular fa-circle-question" data-toggle="tooltip" title="{{trans('file.Minimum qty which must be sold in a day. If not, you will be notified on dashboard. But you have to set up the cron job properly for that. Follow the documentation in that regard.')}}"></i>

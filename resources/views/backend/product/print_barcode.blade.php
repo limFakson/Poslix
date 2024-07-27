@@ -158,6 +158,7 @@
                 data: data
             },
             success: function(data) {
+                console.log(data)
                 var flag = 1;
                 $(".product-code").each(function() {
                     if ($(this).text() == data[1]) {

@@ -123,22 +123,6 @@ class SaleController extends Controller
                 'payment_status'=>$saleData['paymentStatus']?? null,
                 'document'=>$saleData['document']?? null,
                 'paid_amount'=>$saleData['paidAmount']?? null,
-                'billing_name'=>$saleData['billingName']?? null,
-                'billing_phone'=>$saleData['billingPhone']?? null,
-                'billing_email'=>$saleData['billingEmail']?? null,
-                'billing_address'=>$saleData['billingAddress']?? null,
-                'billing_city'=>$saleData['billingCity']?? null,
-                'billing_state'=>$saleData['billingState']?? null,
-                'billing_country'=>$saleData['billingCountry']?? null,
-                'billing_zip'=>$saleData['billingZip']?? null,
-                'shipping_name'=>$saleData['shippingName']?? null,
-                'shipping_phone'=>$saleData['shippingPhone']?? null,
-                'shipping_email'=>$saleData['shippingEmail']?? null,
-                'shipping_address'=>$saleData['shippingAddress']?? null,
-                'shipping_city'=>$saleData['shippingCity']?? null,
-                'shipping_state'=>$saleData['shippingState']?? null,
-                'shipping_country'=>$saleData['shippingCountry']?? null,
-                'shipping_zip'=>$saleData['shippingZip']?? null,
                 'sale_type'=>$saleData['saleType'],
                 'order_type'=>$saleData['orderType'],
                 'payment_mode'=>$saleData['paymentMode']?? null,
@@ -265,7 +249,7 @@ class SaleController extends Controller
             $payment = DB::connection('tenant')->table('payments')->insert($paymentData);
 
             $sale = $createData;
-            event(new SaleEvent($sale));
+            event(new SaleEvent($sale, 'created', $tenantId));
             $responseForSale = ["Sale:" => $sale, "Product_Sale:"=>$ProductSales, "Payment_data:"=>$paymentData];
             $processedSales[] = $responseForSale;
         }
@@ -387,22 +371,6 @@ class SaleController extends Controller
             'sale_status' => $saleData['saleStatus'] ?? null,
             'payment_status' => $saleData['paymentStatus'] ?? null,
             'paid_amount' => $saleData['paidAmount'] ?? null,
-            'billing_name' => $saleData['billingName'] ?? null,
-            'billing_phone' => $saleData['billingPhone'] ?? null,
-            'billing_email' => $saleData['billingEmail'] ?? null,
-            'billing_address' => $saleData['billingAddress'] ?? null,
-            'billing_city' => $saleData['billingCity'] ?? null,
-            'billing_state' => $saleData['billingState'] ?? null,
-            'billing_country' => $saleData['billingCountry'] ?? null,
-            'billing_zip' => $saleData['billingZip'] ?? null,
-            'shipping_name' => $saleData['shippingName'] ?? null,
-            'shipping_phone' => $saleData['shippingPhone'] ?? null,
-            'shipping_email' => $saleData['shippingEmail'] ?? null,
-            'shipping_address' => $saleData['shippingAddress'] ?? null,
-            'shipping_city' => $saleData['shippingCity'] ?? null,
-            'shipping_state' => $saleData['shippingState'] ?? null,
-            'shipping_country' => $saleData['shippingCountry'] ?? null,
-            'shipping_zip' => $saleData['shippingZip'] ?? null,
             'sale_type' => $saleData['saleType'] ?? null,
             'order_type' => $saleData['orderType'] ?? null,
             'payment_mode' => $saleData['paymentMode'] ?? null,
@@ -572,8 +540,6 @@ class SaleController extends Controller
             )
             ->where('sales.id', $saleId)
             ->first();
-        $sale = $data;
-        event(new SaleEvent($sale));
 
         $product_sale = DB::connection('tenant')->table('product_sales')
             ->leftjoin('products', 'product_sales.product_id', '=', 'products.id')
@@ -583,7 +549,8 @@ class SaleController extends Controller
             )
             ->where('product_sales.sale_id', $saleId)
             ->get();
-
+        // event(new SaleEvent($data, ));
+        event(new Sale($data, 'updated', $tenantId));
         $saleResources = new SaleResource($data);
         $productSaleResources = new ProductSalesCollection($product_sale);
 
@@ -685,6 +652,8 @@ class SaleController extends Controller
         $product_sale = DB::connection('tenant')->table('product_sales')
             ->where('id', $id)->delete();
 
+        $sale = ["productSaleId"=>$id];
+        event(new SaleEvent($sale, 'ProductSale-deleted'));
         return response()->json(["message" => "Product sale successfully deleted"]);
 
     }
@@ -786,7 +755,7 @@ class SaleController extends Controller
         DB::connection('tenant')->table('sales')
             ->where('id', $saleId)
             ->delete();
-
+        event(new SaleEvent($saleId, 'deleted'));
         return response()->json(["message" => "Sale successfully deleted"]);
     }
 

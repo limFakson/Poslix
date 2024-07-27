@@ -126,7 +126,7 @@
                     <tr>
                         <td><a href="{{ $url }}" class="btn btn-info"><i class="fa fa-arrow-left"></i>
                                 {{ trans('file.Back') }}</a> </td>
-                        <td><button onclick="window.print();" class="btn btn-primary"><i class="dripicons-print"></i>
+                        <td><button onclick="print();" class="btn btn-primary"><i class="dripicons-print"></i>
                                 {{ trans('file.Print') }}</button></td>
                         @php
                             $wssetting = \App\Models\WhatsappSmsSetting::first();
@@ -201,11 +201,11 @@
                         } else {
                             $product_name = $lims_product_data->name;
                         }
-                        
+
                         if ($product_sale_data->imei_number) {
                             $product_name .= '<br>' . trans('IMEI or Serial Numbers') . ': ' . $product_sale_data->imei_number;
                         }
-                        
+
                         if (!is_null($product_sale_data->extra_names)) {
                             if (!is_array($product_sale_data->extra_names)) {
                                 $product_sale_data->extra_names = json_decode($product_sale_data->extra_names, true);
