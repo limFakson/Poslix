@@ -30,7 +30,7 @@ class ProductResource extends JsonResource
             'taxMethod' =>$this ->tax_method??null,
             'taxName' =>$this ->tax_name??null,
             'taxRate' =>$this ->tax_rate??null,
-            // 'warehouseQty'=>$this->warehouse_qty
+            'warehouseQty'=>$this->warehouse_qty??null
         ];
     }
 }

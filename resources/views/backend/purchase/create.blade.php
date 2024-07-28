@@ -156,6 +156,10 @@
                                                         <th class="recieved-product-qty d-none">{{trans('file.Recieved')}}</th>
                                                         <th>{{trans('file.Batch No')}}</th>
                                                         <th>{{trans('file.Expired Date')}}</th>
+                                                        <th>{{trans('file.price')}}</th>
+                                                        <th>{{trans('file.Price1')}}</th>
+                                                        <th>{{trans('file.Price2')}}</th>
+                                                        <th>{{trans('file.Price3')}}</th>
                                                         <th>{{trans('file.Net Unit Cost')}}</th>
                                                         <th>{{trans('file.Avg Unit Cost')}}</th>
                                                         <th>{{trans('file.Discount')}}</th>
@@ -170,6 +174,10 @@
                                                     <th colspan="2">{{trans('file.Total')}}</th>
                                                     <th id="total-qty">0</th>
                                                     <th class="recieved-product-qty d-none"></th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -478,8 +486,8 @@
     $("#myTable").on('input', '.qty', function() {
         rowindex = $(this).closest('tr').index();
         if($(this).val() < 1 && $(this).val() != '') {
-        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val(1);
-        alert("Quantity can't be less than 1");
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val(1);
+            alert("Quantity can't be less than 1");
         }
         checkQuantity($(this).val(), true);
     });
@@ -496,7 +504,7 @@
         unit_name.splice(rowindex, 1);
         unit_operator.splice(rowindex, 1);
         unit_operation_value.splice(rowindex, 1);
-        console.log(product_cost);
+        // console.log(product_cost);
         $(this).closest("tr").remove();
         calculateTotal();
     });
@@ -575,6 +583,7 @@
         } else {
             product_cost[rowindex] = $('input[name="edit_unit_cost"]').val() * row_unit_operation_value;
         }
+        // console.log(product_cost)
 
         product_discount[rowindex] = $('input[name="edit_discount"]').val();
         var position = $('select[name="edit_unit"]').val();
@@ -593,6 +602,23 @@
         unit_operator[rowindex] = temp_unit_operator.toString() + ',';
         unit_operation_value[rowindex] = temp_unit_operation_value.toString() + ',';
         checkQuantity(edit_qty, false);
+    });
+
+    $("#myTable").on('input', '.cost_input', function() {
+        rowindex = $(this).closest('tr').index();
+        var sta_qty = $('.qty').val()
+
+        var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
+        var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(","));
+        row_unit_operation_value = parseFloat(row_unit_operation_value);
+
+        if (row_unit_operator == '*') {
+            product_cost[rowindex] = $(this).val() / row_unit_operation_value;
+        } else {
+            product_cost[rowindex] = $(this).val() * row_unit_operation_value;
+        }
+        console.log(sta_qty, product_cost[rowindex])
+        checkQuantity(sta_qty, false);
     });
 
     function productSearch(data) {
@@ -622,13 +648,24 @@
                         flag = 0;
                     }
                 });
+                if (Array.isArray(data[17]) && data[17].length >= 2) {
+                    var warehouseDetails = '';
+                    for (var i = 0; i < data[17].length; i += 2) {
+                        var warehouse_name = data[17][i] ? data[17][i] : 'Unknown';
+                        var qty = data[17][i + 1] ? data[17][i + 1] : 0;
+                        warehouseDetails += '<span style="padding-top:3px;">' + warehouse_name + ' ' +':'+ ' '+ qty + '</span><br>';
+                    }
+                } else {
+                    var warehouseDetails = '';
+                }
+
                 $("input[name='product_code_name']").val('');
                 if(flag){
                     var newRow = $("<tr>");
                     var cols = '';
                     temp_unit_name = (data[6]).split(',');
                     cols += '<td>' + data[0] + '<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button></td>';
-                    cols += '<td>' + data[1] + '</td>';
+                    cols += '<td>' + data[1] + warehouseDetails +'</td>';
                     cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" step="any" required/></td>';
                     if($('select[name="status"]').val() == 1)
                         cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="1" step="any"/></td>';
@@ -645,7 +682,11 @@
                         cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
                     }
 
-                    cols += '<td class="net_unit_cost"></td>';
+                    cols += '<td><input type="text" class="form-control price" value="'+ data[13] +'" name="price[]" required/></td>';
+                    cols += '<td><input type="text" class="form-control price1" value="'+ data[14] +'" name="price1[]" required/></td>';
+                    cols += '<td><input type="text" class="form-control price2" value="'+ data[15] +'" name="price2[]" required/></td>';
+                    cols += '<td><input type="text" class="form-control price3" value="'+ data[16] +'" name="price3[]" required/></td>';
+                    cols += '<td><input type="text" class="form-control cost_input" value="'+$('#oldUnitCost').val()+'" required/></td>';
                     cols += '<td class="avg_unit_cost"></td>';
                     cols += '<td class="discount">{{number_format(0, $general_setting->decimal, '.', '')}}</td>';
                     cols += '<td class="tax"></td>';
@@ -655,6 +696,7 @@
                     cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
                     cols += '<input type="hidden" class="purchase-unit" name="purchase_unit[]" value="' + temp_unit_name[0] + '"/>';
                     cols += '<input type="hidden" class="net_unit_cost" name="net_unit_cost[]" />';
+                    cols += '<input type="hidden" class="avg_unit_cost" name="avg_unit_cost[]" />';
                     cols += '<input type="hidden" class="discount-value" name="discount[]" />';
                     cols += '<input type="hidden" class="tax-rate" name="tax_rate[]" value="' + data[3] + '"/>';
                     cols += '<input type="hidden" class="tax-value" name="tax[]" />';
@@ -731,14 +773,14 @@
 
         //new net unit cost
         let newStockQty = parseInt(quantity);
-        let newUnitCost = parseInt(net_unit_cost);
+        let newUnitCost = parseFloat(net_unit_cost);
         calculateAvgUnitCost(newStockQty, newUnitCost)
         calculateTotal();
     }
 
     function calculateAvgUnitCost(newStockQty, newUnitCost) {
         var oldStockQty = parseInt($('#oldStockQty').val());
-        var oldUnitCost = parseInt($('#oldUnitCost').val());
+        var oldUnitCost = parseFloat($('#oldUnitCost').val());
 
         let oldStockTotalCost = oldStockQty * oldUnitCost;
 
@@ -751,7 +793,8 @@
         let avgUnitCost = totalCost / totalStockQty;
 
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.avg_unit_cost').text(avgUnitCost.toFixed({{$general_setting->decimal}}));
-        return avgUnitCost;
+        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.avg_unit_cost').val(avgUnitCost.toFixed({{$general_setting->decimal}}));
+        // return avgUnitCost;
     }
 
     function unitConversion() {

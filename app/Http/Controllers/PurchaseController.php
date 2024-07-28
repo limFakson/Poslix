@@ -357,6 +357,10 @@ class PurchaseController extends Controller
                 ->first();
             $lims_product_data->cost += $lims_product_data->additional_cost;
         }
+        $lims_product_warehouse_data = Product_Warehouse::where([
+                                        ['product_id', $lims_product_data->id]
+                                        ])
+                                        ->get();
         $product[] = $lims_product_data->name;
         if($lims_product_data->is_variant)
             $product[] = $lims_product_data->item_code;
@@ -399,13 +403,24 @@ class PurchaseController extends Controller
         $product[] = $lims_product_data->is_batch;
         $product[] = $lims_product_data->is_imei;
         $product[] = $lims_product_data->qty;
+        $product[] = $lims_product_data->price;
+        $product[] = $lims_product_data->price1;
+        $product[] = $lims_product_data->price2;
+        $product[] = $lims_product_data->price3;
+        if($lims_product_warehouse_data){
+            foreach($lims_product_warehouse_data as $i){
+                $warehouse = Warehouse::where('id', $i->warehouse_id)->first();
+                $warehouse_array[] = $warehouse->name;
+                $warehouse_array[] = $i->qty;
+            }
+        }
+        $product[]=$warehouse_array;
         return $product;
     }
 
     public function store(Request $request)
     {
         $data = $request->except('document');
-        //return dd($data);
         $data['user_id'] = Auth::id();
         $data['reference_no'] = 'pr-' . date("Ymd") . '-'. date("his");
         $document = $request->document;
@@ -461,6 +476,11 @@ class PurchaseController extends Controller
         $expired_date = $data['expired_date'];
         $purchase_unit = $data['purchase_unit'];
         $net_unit_cost = $data['net_unit_cost'];
+        $avg_unit_cost = $data['avg_unit_cost'];
+        $new_price = $data['price'];
+        $price1 = $data['price1'];
+        $price2 = $data['price2'];
+        $price3 = $data['price3'];
         $discount = $data['discount'];
         $tax_rate = $data['tax_rate'];
         $tax = $data['tax'];
@@ -477,6 +497,12 @@ class PurchaseController extends Controller
                 $quantity = $recieved[$i] / $lims_purchase_unit_data->operation_value;
             }
             $lims_product_data = Product::find($id);
+            $lims_product_data->cost = $net_unit_cost[$i];
+            $lims_product_data->price = $new_price[$i];
+            $lims_product_data->price1 = $price1[$i];
+            $lims_product_data->price2 = $price2[$i];
+            $lims_product_data->price3 = $price3[$i];
+            $lims_product_data->save();
             $price = $lims_product_data->price;
             //dealing with product barch
             if($batch_no[$i]) {

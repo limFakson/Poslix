@@ -300,7 +300,6 @@
 
     $(document).on("click", ".barcode", function() {
         var product = $(this).closest('tr').data('product');
-        console.log(product);
         var flag = 1;
 
         $(".product-code").each(function() {
@@ -328,7 +327,6 @@
         paper_size = ($("#paper-size").val());
         if(paper_size != "0") {
             var product_code = $("table.order-list tbody tr").find('td:nth-child(2)').text();
-            console.log(product_code)
 
             // Perform the GET request to search for the product
             $.ajax({
@@ -339,8 +337,6 @@
                     data : product_code
                 },
                 success: function(data) {
-                    console.log("Product data retrieved:", data);
-
                     // Proceed with the rest of the code after successfully getting the product data
                     var product_name = [];
                     var code = [];
@@ -381,26 +377,26 @@
 
                             if($('input[name="promo_price"]').is(":checked")) {
                                 if(currency_position[index] == 'prefix')
-                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">Price: '+currency[index]+'<span style="text-decoration: line-through;"><strong> '+price[index]+'</strong></span> '+promo_price[index]+'</span><br>';
+                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">'+currency[index]+'<span style="text-decoration: line-through;"><strong> '+price[index]+'</strong></span> '+promo_price[index]+'</span><br>';
                                 else
-                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">Price: <span style="text-decoration: line-through;"><strong>'+price[index]+'</strong></span> '+promo_price[index]+' '+currency[index]+'</span><br>';
+                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><span style="text-decoration: line-through;"><strong>'+price[index]+'</strong></span> '+promo_price[index]+' '+currency[index]+'</span><br>';
                             }
                             else if($('input[name="price"]').is(":checked")) {
                                 if(currency_position[index] == 'prefix')
-                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">Price: <strong>'+currency[index]+' '+price[index]+'</strong></span>';
+                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+currency[index]+' '+price[index]+'</strong></span>';
                                 else
-                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">Price: <strong>'+price[index]+' '+currency[index]+'</strong></span>';
+                                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+price[index]+' '+currency[index]+'</strong></span>';
                             }
 
                             if (paper_size === 18) {
-                                htmltext += '<img style="max-width:150px; height:100%; max-height:12px; display: block; margin: 0 auto;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" /><br>';
+                                htmltext += '<img style="max-width:150px; height:100%; max-height:12px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
                             } else {
-                                htmltext += '<img style="max-width:150px; height:100%; max-height:30px; display: block; margin: 0 auto;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" /><br>';
+                                htmltext += '<img style="max-width:150px; height:100%; max-height:30px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
                             }
 
-                            htmltext += code[index] + '<br>';
+                            htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
                             if($('input[name="code"]').is(":checked"))
-                                htmltext += code[index] +'<br>';
+                                htmltext += '<span style="font-size:11px;">' +code[index] +'</span>';
 
                             if ($('input[name="name"]').is(":checked")) {
                                 htmltext += '<span style="display: block; text-align: center;">' + product_name[index] + '</span><br>';
@@ -432,6 +428,42 @@
     //       newWin.document.close();
     //       setTimeout(function(){newWin.close();},10);
     // });
+
+    $(document).on("click", "#print-bar", function() {
+        var divToPrint = document.getElementById('print-barcode');
+        if (!divToPrint) {
+            console.error('Element with id "print-barcode" not found.');
+            return;
+        }
+
+        var newWin = window.open('', 'Print-Window');
+        newWin.document.open();
+        newWin.document.write(`
+            <html>
+            <head>
+                <style type="text/css">
+                    @media print {
+                        #modal_header { display: none }
+                        #print-bar { display: none }
+                        #close-btn { display: none }
+                    }
+                    table.barcodelist { page-break-inside:auto }
+                    table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }
+                </style>
+            </head>
+            <body onload="window.print()">
+                ${divToPrint.innerHTML}
+            </body>
+            </html>
+        `);
+        newWin.document.close();
+        setTimeout(function(){
+            newWin.close();
+        }, 1000);
+    });
+
+
+
 
     $("#print-btn").on("click", function() {
           var divToPrint=document.getElementById('product-details');

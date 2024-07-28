@@ -11,8 +11,6 @@ class UploadController extends Controller
 {
     //
     public function index(){
-        $sale ="Guood";
-        event(new Sale($sale));
         return view('asset.file');
     }
 
@@ -21,6 +19,7 @@ class UploadController extends Controller
         $file = $request->file;
         $version = $request->version;
         $build = $request->build;
+        $signature = $request->sign;
 
         $filename =pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME).'_'.time().'.'.$file->getClientOriginalExtension();
         $request->file->move('public/assets',$filename);
@@ -38,6 +37,7 @@ class UploadController extends Controller
         $data->file=$filename;
         $data->version=$version;
         $data->build=$build;
+        $data->signature=$signature;
 
         $data->save();
 
@@ -70,11 +70,12 @@ class UploadController extends Controller
 
     public function xmlDoc(Request $request){
         // Grab latest app name and date added from the db
-        $app = App::select('file', 'created_at', 'version', 'build')->orderBy('id', 'desc')->first();
-        $filename = $app['file'];
-        $version = $app["version"];
-        $build = $app["build"];
-        $date = $app['created_at'];
+        $app = App::orderBy('id', 'desc')->first();
+        $filename = $app->file;
+        $version = $app->version;
+        $build = $app->build;
+        $signature = $app->signature;
+        $date = $app->created_at;
 
         if(!$filename){
             return response(["error"=> "File name not found"], 404);
@@ -96,7 +97,7 @@ class UploadController extends Controller
             </sparkle:releaseNotesLink>
             <pubDate>' . htmlspecialchars($date) . '</pubDate>
             <enclosure url="' . htmlspecialchars($downloadLink) . '"
-                sparkle:dsaSignature="MDwCHHPPiRRwkeU98CZfuvaJ15glN3JelO8z+qZF8GECHHzxbvnUwI28VtnVeZFzGrkuRmtGuu8KNhCGf9Y="
+                sparkle:dsaSignature="' . htmlspecialchars($signature) . '"
                 sparkle:version="' . htmlspecialchars($version) . '+' . htmlspecialchars($build) . '"
                 sparkle:os="windows" length="0" type="application/octet-stream" />
         </item>

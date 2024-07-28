@@ -51,6 +51,7 @@
             @csrf
             <input type="text" placeholder="version" name="version" required> <br> <br>
             <input type="text" placeholder="build num" name="build" required> <br> <br>
+            <input type="text" placeholder="Signature" name="sign" required> <br> <br>
             <input type="file" name="file" id="app"> <br><br>
             <button type="submit">Submit</button>
         </form>
@@ -63,12 +64,4 @@
         @endif
     </main>
 </body>
-<script src="{{ url('js/app.js') }}"></script>
-<script>
-    window.Echo.channel('Sale')
-    .listen('Sale', (e) => {
-        console.log(e.message);
-    });
-
-</script>
 </html>

@@ -59,7 +59,9 @@ class QrCodeController extends Controller {
         if($request->data) {
             $table = DB::table('tables')->where('id', $request->data )->first();
         }
+
         $data = 'http://demo.gettlb.com/main';
+        // if(){}
         // dd( $request->uploadImage->extension() );
         if ( $request->hasFile( 'uploadImage' ) ) {
             // $logoPath = $request->file( 'uploadImage' )->store( 'qrlogos', 'public' );

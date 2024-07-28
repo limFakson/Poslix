@@ -166,7 +166,7 @@ class PurchaseController extends Controller
                             ['purchases.user_id', Auth::id()],
                             ['purchases.' . $field_name, 'LIKE', "%{$search}%"]
                         ]);
-                }      
+                }
                 $purchases = $q->select('purchases.*')->get();
                 $totalFiltered = $q->count();
             }
@@ -997,7 +997,7 @@ class PurchaseController extends Controller
                                                     ->first();
                         if($lims_product_warehouse_data)
                             $price = $lims_product_warehouse_data->price;
-                            
+
                         $lims_product_warehouse_data = Product_Warehouse::where([
                             ['product_id', $pro_id],
                             ['product_batch_id', $product_purchase['product_batch_id'] ],

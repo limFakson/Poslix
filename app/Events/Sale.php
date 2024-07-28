@@ -9,6 +9,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use App\Http\Resources\Api\SaleCollection;
 
 class Sale implements ShouldBroadcast
 {
@@ -20,6 +21,7 @@ class Sale implements ShouldBroadcast
 
     public function __construct($saleData, $method, $tenantId)
     {
+        // dd($saleData['id']);
         $this->saleData = $saleData;
         $this->method = $method;
         $this->tenantId = $tenantId;
