@@ -122,8 +122,9 @@
 	        product_name = data[1];
 	        product_qty = data[2];
 	        unit_cost = data[3];
+            warehouse_id = data[4];
 	        $.each(product_code, function(index) {
-	            lims_product_array.push(product_code[index] + ' (' + product_name[index] + ')' + '|' + unit_cost[index]);
+	            lims_product_array.push(product_code[index] + ' (' + product_name[index] + ')' + '|' + unit_cost[index] + '|' + warehouse_id);
 	        });
 	    });
 	});
@@ -140,6 +141,7 @@
 	    response: function(event, ui) {
 	        if (ui.content.length == 1) {
 	            var data = ui.content[0].value;
+                console.log(data);
 	            $(this).autocomplete( "close" );
 	            productSearch(data);
 	        };
@@ -212,7 +214,7 @@
                     var newRow = $("<tr>");
                     var cols = '';
                     cols += '<td>' + data[0] + '</td>';
-                    cols += '<td>' + data[1] + '</td>';
+                    cols += '<td>' + data[1] + '<br><span style="padding-top:3px;">' + data[5] + ' ' +':'+ ' '+ data[6] + '</span><br></td>';
                     cols += '<td>' + data[4] + '<input type="hidden" name="unit_cost[]" value="'+data[4]+'" /></td>';
                     cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" required step="any" /></td>';
                     cols += '<td class="action"><select name="action[]" class="form-control act-val"><option value="-">{{trans("file.Subtraction")}}</option><option value="+">{{trans("file.Addition")}}</option></select></td>';

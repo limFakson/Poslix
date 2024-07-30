@@ -1394,8 +1394,9 @@ class ProductController extends Controller
         $lims_product_data = Product::where([
             ['code', $product_code[0]],
             ['is_active', true]
-        ])->first();
-        if (!$lims_product_data) {
+            ])->whereNull(['is_variant'])->first();
+
+            if (!$lims_product_data) {
             $lims_product_data = Product::join('product_variants', 'products.id', 'product_variants.product_id')
                 ->select('products.*', 'product_variants.item_code', 'product_variants.variant_id', 'product_variants.additional_price')
                 ->where('product_variants.item_code', $product_code[0])

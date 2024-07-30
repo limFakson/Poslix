@@ -800,9 +800,9 @@ class PosLivewire extends Component
                 }
             }
 
-            if (count($sale_unit) > 0 && isset($sale_unit[$i]) && $sale_unit[$i] != 'n/a') {
+            if (count($sale_unit) > 0 && isset($sale_unit[$i]) && $sale_unit[$i] != '0') {
                 $lims_sale_unit_data  = Unit::where('id', $sale_unit[$i])->first();
-                $sale_unit_id = $lims_sale_unit_data->id;
+                $sale_unit_id = $sale_unit[$i];
                 if ($lims_product_data->is_variant) {
                     $lims_product_variant_data = ProductVariant::select('id', 'variant_id', 'qty')->FindExactProductWithCode($item['product_id'], $item['code'])->first();
                     $product_sale['variant_id'] = $lims_product_variant_data->variant_id;

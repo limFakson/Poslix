@@ -6,12 +6,11 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Http\Resources\Api\SaleCollection;
 
-class Sale implements ShouldBroadcast
+class Sale implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,7 +20,6 @@ class Sale implements ShouldBroadcast
 
     public function __construct($saleData, $method, $tenantId)
     {
-        // dd($saleData['id']);
         $this->saleData = $saleData;
         $this->method = $method;
         $this->tenantId = $tenantId;

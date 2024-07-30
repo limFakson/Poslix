@@ -182,7 +182,6 @@
                 <div class="col-md-4">
                     <label><strong>Paper Size *</strong></label>
                     <select class="form-control" name="paper_size" required id="paper-size">
-                        <option value="0">Select paper size...</option>
                         <option value="36">36 mm (1.4 inch)</option>
                         <option value="24">24 mm (0.94 inch)</option>
                         <option value="18">18 mm (0.7 inch)</option>
@@ -190,7 +189,7 @@
                 </div>
             </div>
             <div class="form-group mt-3">
-                <input type="submit" value="{{trans('file.submit')}}" data-dismiss="modal" class="btn btn-primary" id="submit-button">
+                <input type="submit" value="{{trans('file.submit')}}" class="btn btn-primary" id="submit-button">
             </div>
 
             <h5 id="combo-header"></h5>
@@ -206,20 +205,20 @@
 </div>
 
 <div id="print-barcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-        <div role="document" class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                  <h5 id="modal_header" class="modal-title">{{trans('file.Barcode')}}</h5>&nbsp;&nbsp;
-                  <button id="print-bar" type="button" class="btn btn-default btn-sm"><i class="dripicons-print"></i> {{trans('file.Print')}}</button>
-                  <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-                </div>
-                <div class="modal-body">
-                    <div id="label-content" style="display: flex;justify-content: center;align-items: center;flex-direction: column;padding-bototm: 4px;">
-                    </div>
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="modal_header" class="modal-title">{{trans('file.Barcode')}}</h5>&nbsp;&nbsp;
+                <button id="print-bar" type="button" class="btn btn-default btn-sm"><i class="dripicons-print"></i> {{trans('file.Print')}}</button>
+                <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <div id="label-content" style="display: flex;justify-content: center;align-items: center;flex-direction: column;padding-bototm: 4px;">
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 @endsection
 @push('scripts')
@@ -323,6 +322,15 @@
         }
     });
 
+    var product_name = [];
+    var code = [];
+    var price = [];
+    var promo_price = [];
+    var qty = [];
+    var barcode_image = [];
+    var currency = [];
+    var currency_position = [];
+
     $("#submit-button").on("click", function(event) {
         paper_size = ($("#paper-size").val());
         if(paper_size != "0") {
@@ -338,14 +346,6 @@
                 },
                 success: function(data) {
                     // Proceed with the rest of the code after successfully getting the product data
-                    var product_name = [];
-                    var code = [];
-                    var price = [];
-                    var promo_price = [];
-                    var qty = [];
-                    var barcode_image = [];
-                    var currency = [];
-                    var currency_position = [];
                     var rownumber = $('table.order-list tbody tr:last').index();
                     for(i = 0; i <= rownumber; i++){
                         product_name.push(data[0]);
@@ -357,59 +357,75 @@
                         qty.push($('table.order-list tbody tr:nth-child(' + (i + 1) + ')').find('.qty').val());
                         barcode_image.push(data[3]);
                     }
-                    var htmltext = '<table class="barcodelist" style="width:378px;" cellpadding="5px" cellspacing="10px">';
+                    var htmltext = '<table class="barcodelist" style="width:378px;font-family:sans-serif;" cellpadding="5px" cellspacing="10px">';
                     $.each(qty, function(index){
                         i = 0;
                         while(i < qty[index]) {
-                            if(i % 1 == 0)
-                                htmltext +='<tr>';
-                            // 36mm
-                            if (paper_size === 36) {
-                                htmltext += '<td style="width:38mm; height:25mm; padding-left:50px; padding-bottom:70px; font-size:13px; vertical-align:middle; text-align:center">';
+                            if (i % 1 == 0) {
+                                htmltext += '<tr>';
                             }
-                            //24mm
-                            else if(paper_size == 24)
-                                htmltext +='<td style="width:164px;height:100%;font-size:12px;text-align:center">';
-                            //18mm
-                            else if (paper_size === 18) {
-                                htmltext += '<td style="width:38mm; height:25mm; font-size:10px; text-align:center">';
+
+                            // 36mm
+                            if (paper_size == 36) {
+                                htmltext += '<td style="width:38mm; height:25mm; font-size:13px; text-align:center">';
+                            }
+                            // 24mm
+                            else if(paper_size == 24) {
+                                htmltext += '<td style="width:164px; height:100%; font-size:12px; text-align:center">';
+                            }
+                            // 18mm
+                            else if (paper_size == 18) {
+                                htmltext += '<td style="width:18mm; height:25mm; font-size:10px; text-align:center">';
                             }
 
                             if($('input[name="promo_price"]').is(":checked")) {
-                                if(currency_position[index] == 'prefix')
+                                if(currency_position[index] == 'prefix') {
                                     htmltext += '<span style="display: block;text-align: center;padding: 4px;">'+currency[index]+'<span style="text-decoration: line-through;"><strong> '+price[index]+'</strong></span> '+promo_price[index]+'</span><br>';
-                                else
+                                } else {
                                     htmltext += '<span style="display: block;text-align: center;padding: 4px;"><span style="text-decoration: line-through;"><strong>'+price[index]+'</strong></span> '+promo_price[index]+' '+currency[index]+'</span><br>';
-                            }
-                            else if($('input[name="price"]').is(":checked")) {
-                                if(currency_position[index] == 'prefix')
+                                }
+                            } else if($('input[name="price"]').is(":checked")) {
+                                if(currency_position[index] == 'prefix') {
                                     htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+currency[index]+' '+price[index]+'</strong></span>';
-                                else
+                                } else {
                                     htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+price[index]+' '+currency[index]+'</strong></span>';
+                                }
                             }
 
-                            if (paper_size === 18) {
-                                htmltext += '<img style="max-width:150px; height:100%; max-height:12px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
+                            if (paper_size == 18) {
+                                htmltext += '<img style="max-width:150px; height:100%; max-height:20px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
                             } else {
-                                htmltext += '<img style="max-width:150px; height:100%; max-height:30px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
+                                htmltext += '<img style="max-width:190px; height:100%; max-height:35px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
                             }
 
                             htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
-                            if($('input[name="code"]').is(":checked"))
-                                htmltext += '<span style="font-size:11px;">' +code[index] +'</span>';
-
-                            if ($('input[name="name"]').is(":checked")) {
-                                htmltext += '<span style="display: block; text-align: center;">' + product_name[index] + '</span><br>';
+                            if($('input[name="code"]').is(":checked")) {
+                                htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
                             }
-                            htmltext +='</td>';
-                            if(i % 1 != 0)
-                                htmltext +='</tr>';
+
+                            if (paper_size == 18) {
+                                if ($('input[name="name"]').is(":checked")) {
+                                    htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 150px;">' + product_name[index] + '</span><br>';
+                                }
+                            } else {
+                                if ($('input[name="name"]').is(":checked")) {
+                                    htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 180px;">' + product_name[index] + '</span><br>';
+                                }
+                            }
+
+
+                            htmltext += '</td>';
+
+                            if (i % 1 != 0) {
+                                htmltext += '</tr>';
+                            }
                             i++;
                         }
                     });
+
                     htmltext += '</table>';
                     $('#label-content').html(htmltext);
-                    $('#print-barcode').modal('show');
+                    print_barcode()
                 },
                 error: function(xhr, status, error) {
                     console.error("Error retrieving product data:", error);
@@ -420,47 +436,43 @@
             alert('Please select paper size');
     });
 
-    // $("#print-bar").on("click", function(){
-    //       var divToPrint=document.getElementById('print-barcode');
-    //       var newWin=window.open('','Print-Window');
-    //       newWin.document.open();
-    //       newWin.document.write('<style type="text/css">@media print { #modal_header { display: none } #print-btn { display: none } #close-btn { display: none } } table.barcodelist { page-break-inside:auto } table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
-    //       newWin.document.close();
-    //       setTimeout(function(){newWin.close();},10);
+    function print_barcode(){
+          var divToPrint=document.getElementById('print-barcode');
+          var newWin=window.open('','Print-Window');
+          newWin.document.open();
+          newWin.document.write('<style type="text/css">@media print { #modal_header { display: none } #print-bar { display: none } #close-btn { display: none } } table.barcodelist { page-break-inside:auto } table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.close();
+          setTimeout(function(){newWin.close();},100);
+    };
+
+    // $(document).on("click", "#print-bar", function() {
+    //     var divToPrint = document.getElementById('print-barcode');
+    //     if (!divToPrint) {
+    //         console.error('Element with id "print-barcode" not found.');
+    //         return;
+    //     }
+
+    //     var newWin = window.open('', 'Print-Window');
+    //     newWin.document.open();
+    //     newWin.document.write(`
+    //             <style type="text/css">
+    //                 @media print {
+    //                     #modal_header { display: none }
+    //                     #print-bar { display: none }
+    //                     #close-btn { display: none }
+    //                 }
+    //                 table.barcodelist { page-break-inside:auto }
+    //                 table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }
+    //             </style>
+    //         <body onload="window.print()">
+    //             ${divToPrint.innerHTML}
+    //         </body>
+    //     `);
+    //     newWin.document.close();
+    //     setTimeout(function(){
+    //         newWin.close();
+    //     }, 1000);
     // });
-
-    $(document).on("click", "#print-bar", function() {
-        var divToPrint = document.getElementById('print-barcode');
-        if (!divToPrint) {
-            console.error('Element with id "print-barcode" not found.');
-            return;
-        }
-
-        var newWin = window.open('', 'Print-Window');
-        newWin.document.open();
-        newWin.document.write(`
-            <html>
-            <head>
-                <style type="text/css">
-                    @media print {
-                        #modal_header { display: none }
-                        #print-bar { display: none }
-                        #close-btn { display: none }
-                    }
-                    table.barcodelist { page-break-inside:auto }
-                    table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }
-                </style>
-            </head>
-            <body onload="window.print()">
-                ${divToPrint.innerHTML}
-            </body>
-            </html>
-        `);
-        newWin.document.close();
-        setTimeout(function(){
-            newWin.close();
-        }, 1000);
-    });
 
 
 

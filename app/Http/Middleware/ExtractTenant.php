@@ -14,7 +14,8 @@ class ExtractTenant
         $host = $request->getHost();
         $subdomain = explode('.', $host)[0];
         $domain = config('app.domain');
-        if($subdomain === explode('.',$domain)[0]){
+
+        if ($subdomain !== explode('.', $domain)[0]) {
             $tenant = tenancy()->tenant;
 
             if (!$tenant) {

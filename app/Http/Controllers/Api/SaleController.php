@@ -248,14 +248,22 @@ class SaleController extends Controller
             ];
             $payment = DB::connection('tenant')->table('payments')->insert($paymentData);
 
-            $sale = $createData;
-            event(new SaleEvent($sale, 'created', $tenantId));
+            $sale = DB::connection('tenant')->table('sales')
+                    ->leftjoin('customers', 'sales.customer_id', '=', 'customers.id')
+                    ->select(
+                        'sales.*',
+                        'customers.name as customer_name',
+                        'customers.phone_number as customer_phone_number'
+                    )
+                    ->where('sales.id',$newsaleid)
+                    ->first();
+            event(new SaleEvent(new SaleResource($sale), 'created', $tenantId));
+
             $responseForSale = ["Sale:" => $sale, "Product_Sale:"=>$ProductSales, "Payment_data:"=>$paymentData];
             $processedSales[] = $responseForSale;
         }
 
         return response()->json($processedSales, 201);
-        // return new SaleResource(Sale::create($request->all()));
     }
 
     public function show(Request $request, $saleId)
@@ -549,10 +557,10 @@ class SaleController extends Controller
             )
             ->where('product_sales.sale_id', $saleId)
             ->get();
-        // event(new SaleEvent($data, ));
-        event(new Sale($data, 'updated', $tenantId));
+
         $saleResources = new SaleResource($data);
         $productSaleResources = new ProductSalesCollection($product_sale);
+        event(new SaleEvent($saleResources, 'updated', $tenantId));
 
         return response()->json([
             'sale' => $saleResources,
@@ -652,8 +660,8 @@ class SaleController extends Controller
         $product_sale = DB::connection('tenant')->table('product_sales')
             ->where('id', $id)->delete();
 
-        $sale = ["productSaleId"=>$id];
-        event(new SaleEvent($sale, 'ProductSale-deleted'));
+        $psale = ["productSaleId"=>$id];
+        event(new SaleEvent($psale, 'ProductSale-deleted', $tenantId));
         return response()->json(["message" => "Product sale successfully deleted"]);
 
     }
@@ -755,7 +763,8 @@ class SaleController extends Controller
         DB::connection('tenant')->table('sales')
             ->where('id', $saleId)
             ->delete();
-        event(new SaleEvent($saleId, 'deleted'));
+        $sale = ["id"=>$saleId];
+        event(new SaleEvent($sale, 'deleted', $tenantId));
         return response()->json(["message" => "Sale successfully deleted"]);
     }
 

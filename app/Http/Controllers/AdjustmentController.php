@@ -105,6 +105,7 @@ class AdjustmentController extends Controller
         $product_data[] = $product_name;
         $product_data[] = $product_qty;
         $product_data[] = $product_cost;
+        $product_data[] = $id;
         return $product_data;
     }
 
@@ -135,9 +136,21 @@ class AdjustmentController extends Controller
         else
             $product[] = $lims_product_data->code;
 
+        $query = Product_Warehouse::where([
+            ['warehouse_id', '=', $product_info[2]],
+            ['product_id', '=', $lims_product_data->id]
+        ]);
+        if (!is_null($product_variant_id)) {
+            $query->where('variant_id', '=', $product_variant_id);
+        }
+        $lims_warehouse_product_data = $query->first();
+        $lims_warehouse_name = Warehouse::where('id', $product_info[2])->first();
+
         $product[] = $lims_product_data->id;
         $product[] = $product_variant_id;
         $product[] = $product_info[1];
+        $product[] = $lims_warehouse_name->name;
+        $product[] = $lims_warehouse_product_data->qty;
         return $product;
     }
 

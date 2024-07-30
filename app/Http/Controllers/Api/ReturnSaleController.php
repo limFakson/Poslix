@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\ProductReturnsResource;
 use App\Http\Resources\Api\ProductReturnsCollection;
+use App\Http\Resources\Api\SaleResource;
 use App\Http\Resources\Api\ReturnSaleResource;
 use App\Http\Resources\Api\ReturnSaleCollection;
 use App\Http\Requests\StoreReturnRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\landlord\Tenant;
 use Illuminate\Http\Request;
+use App\Events\Sale as SaleEvent;
 
 class ReturnSaleController extends Controller
 {
@@ -144,8 +146,7 @@ class ReturnSaleController extends Controller
                     ['sale_id', '=', $returnData['saleId']],
                 ])
                 ->update([
-                    'return_qty'=>$returnQuantity,
-                    'updated_at'=>$now
+                    'return_qty'=>$returnQuantity
                 ]);
 
                 if(isset($commonData['variant_id'])){
@@ -203,11 +204,22 @@ class ReturnSaleController extends Controller
             }
 
             $returnid = DB::connection('tenant')->table('returns')->insertGetId($createData);
-            DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])->update(['sale_status'=> 4]);
+            $sale_data = DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])
+                        ->first();
+            $sale_total_qty = $sale_data->total_qty - $returnData['totalQty'];
+            $sale_total_price = $sale_data->total_price - $returnData['totalPrice'];
+            $sale_grand_total = $sale_data->grand_total - $returnData['grandTotal'];
+            DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])
+            ->update([
+                'sale_status'=> 4,
+                'total_qty'=> $sale_total_qty,
+                'total_price'=> $sale_total_price,
+                'grand_total'=> $sale_grand_total
+            ]);
+            $sale = ['id'=>$returnData['saleId'], 'saleStatus'=>4, 'totalQty'=>$sale_total_qty, 'totalPrice'=> $sale_total_price, 'grandTotal'=> $sale_grand_total];
+            event(new SaleEvent($sale, 'returnSaleUpdated', $tenantId));
 
-            $Return = ["data" => $createData];
-            $responseForReturn = ["Return:" => $Return, "Product_Return:"=>$Productreturns];
-            $processedreturns[] = $responseForReturn;
+            $processedreturns[] = ["Return:" => $createData, "Product_Return:"=>$Productreturns];
         }
 
 
