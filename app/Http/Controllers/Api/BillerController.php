@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\BillerCollection;
+use App\Http\Resources\Api\BillerResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\landlord\Tenant;
@@ -33,9 +34,10 @@ class BillerController extends Controller
         DB::reconnect('tenant');
 
         $biller = DB::connection('tenant')->table('billers')
-        // ->where('user_id', $userId)
-        ->get();
+                ->where('is_active', 1)
+                ->first();
 
-        return new BillerCollection($biller);
+        // dd($biller);
+        return new BillerResource($biller);
     }
 }

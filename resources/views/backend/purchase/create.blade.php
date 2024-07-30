@@ -154,8 +154,9 @@
                                                         <th>{{trans('file.Code')}}</th>
                                                         <th>{{trans('file.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{trans('file.Recieved')}}</th>
-                                                        <th>{{trans('file.Batch No')}}</th>
-                                                        <th>{{trans('file.Expired Date')}}</th>
+                                                        {{-- <th>{{trans('file.Batch No')}}</th>
+                                                        <th>{{trans('file.Expired Date')}}</th> --}}
+                                                        <th>{{trans('file.category')}}</th>
                                                         <th>{{trans('file.price')}}</th>
                                                         <th>{{trans('file.Price1')}}</th>
                                                         <th>{{trans('file.Price2')}}</th>
@@ -175,7 +176,8 @@
                                                     <th id="total-qty">0</th>
                                                     <th class="recieved-product-qty d-none"></th>
                                                     <th></th>
-                                                    <th></th>
+                                                    {{-- <th></th>
+                                                    <th></th> --}}
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -316,7 +318,7 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{trans('file.Unit Cost')}}</label>
-                                <input type="number" name="edit_unit_cost" class="form-control" step="any">
+                                <input type="number" name="edit_unit_cost" id="edit_unit_cost" class="form-control" step="any">
                             </div>
                             <?php
                                 $tax_name_all[] = 'No Tax';
@@ -583,6 +585,7 @@
         } else {
             product_cost[rowindex] = $('input[name="edit_unit_cost"]').val() * row_unit_operation_value;
         }
+        $('#net_unit_input').val(edit_unit_cost)
         // console.log(product_cost)
 
         product_discount[rowindex] = $('input[name="edit_discount"]').val();
@@ -617,7 +620,6 @@
         } else {
             product_cost[rowindex] = $(this).val() * row_unit_operation_value;
         }
-        console.log(sta_qty, product_cost[rowindex])
         checkQuantity(sta_qty, false);
     });
 
@@ -661,6 +663,9 @@
 
                 $("input[name='product_code_name']").val('');
                 if(flag){
+                    var old_unit_cost = parseFloat($('#oldUnitCost').val());
+                    var decimalPlaces = {{ $general_setting->decimal }};
+                    var old_unit_cost = old_unit_cost.toFixed(decimalPlaces);
                     var newRow = $("<tr>");
                     var cols = '';
                     temp_unit_name = (data[6]).split(',');
@@ -673,20 +678,21 @@
                         cols += '<td class="recieved-product-qty"><input type="number" class="form-control recieved" name="recieved[]" value="1" step="any"/></td>';
                     else
                         cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="0" step="any"/></td>';
-                    if(data[10]) {
-                        cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
-                        cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
-                    }
-                    else {
-                        cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
-                        cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
-                    }
+                    // if(data[10]) {
+                    //     cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
+                    //     cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
+                    // }
+                    // else {
+                    //     cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
+                    //     cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
+                    // }
 
+                    cols += '<td></td>';
                     cols += '<td><input type="text" class="form-control price" value="'+ data[13] +'" name="price[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price1" value="'+ data[14] +'" name="price1[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price2" value="'+ data[15] +'" name="price2[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price3" value="'+ data[16] +'" name="price3[]" required/></td>';
-                    cols += '<td><input type="text" class="form-control cost_input" value="'+$('#oldUnitCost').val()+'" required/></td>';
+                    cols += '<td><input type="text" class="form-control cost_input" id="net_unit_input" value="'+ old_unit_cost +'" required/></td>';
                     cols += '<td class="avg_unit_cost"></td>';
                     cols += '<td class="discount">{{number_format(0, $general_setting->decimal, '.', '')}}</td>';
                     cols += '<td class="tax"></td>';
@@ -751,7 +757,7 @@
             var tax = net_unit_cost * quantity * (tax_rate[rowindex] / 100);
             var sub_total = (net_unit_cost * quantity) + tax;
 
-            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').text(net_unit_cost.toFixed({{$general_setting->decimal}}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_input').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));
@@ -763,7 +769,7 @@
             var tax = (sub_total_unit - net_unit_cost) * quantity;
             var sub_total = sub_total_unit * quantity;
 
-            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').text(net_unit_cost.toFixed({{$general_setting->decimal}}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_input').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));

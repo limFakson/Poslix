@@ -97,7 +97,7 @@ class SaleController extends Controller
                 'id'=>$newsaleid,
                 'user_id' => $saleData['userId'],
                 'reference_no' => $saleData['referenceNo'],
-                'cash_register_id' => $saleData['cashRegisterId'],
+                'cash_register_id' => $saleData['cashRegisterId'] ?? null,
                 'table_id' => $saleData['tableId']?? null,
                 'queue' => $saleData['queue']?? null,
                 'customer_id' => $saleData['customerId'],

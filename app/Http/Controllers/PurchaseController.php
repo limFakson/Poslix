@@ -18,6 +18,7 @@ use App\Models\PaymentWithCreditCard;
 use App\Models\PosSetting;
 use App\Models\Currency;
 use App\Models\CustomField;
+use App\Models\Category;
 use DB;
 use App\Models\GeneralSetting;
 use Stripe\Stripe;
