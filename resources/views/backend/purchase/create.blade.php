@@ -550,7 +550,6 @@
     });
     $('.selectpicker').selectpicker('refresh');
  });
-
     //Update product
     $('button[name="update_btn"]').on("click", function() {
         if(is_imei[rowindex]) {
@@ -666,6 +665,7 @@
                     var old_unit_cost = parseFloat($('#oldUnitCost').val());
                     var decimalPlaces = {{ $general_setting->decimal }};
                     var old_unit_cost = old_unit_cost.toFixed(decimalPlaces);
+                    var selectedCategoryId = data[18];
                     var newRow = $("<tr>");
                     var cols = '';
                     temp_unit_name = (data[6]).split(',');
@@ -678,16 +678,21 @@
                         cols += '<td class="recieved-product-qty"><input type="number" class="form-control recieved" name="recieved[]" value="1" step="any"/></td>';
                     else
                         cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="0" step="any"/></td>';
-                    // if(data[10]) {
-                    //     cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
-                    //     cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
-                    // }
-                    // else {
-                    //     cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
-                    //     cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
-                    // }
+                    if(data[10]) {
+                        cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
+                        cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
+                    }
+                    else {
+                        cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
+                        cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
+                    }
 
-                    cols += '<td></td>';
+                    cols += '<td><div class="form-group"><select name="category_data[]" class="form-control selectpicker">';
+                    @foreach($lims_category_list as $key)
+                    var isSelected = {{ $key->id }} == selectedCategoryId ? 'selected' : '';
+                    cols += '<option value="{{ $key->id }}" ' + isSelected + '>{{ $key->name }}</option>';
+                    @endforeach
+                    cols += '</select></div></td>';
                     cols += '<td><input type="text" class="form-control price" value="'+ data[13] +'" name="price[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price1" value="'+ data[14] +'" name="price1[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price2" value="'+ data[15] +'" name="price2[]" required/></td>';
@@ -727,6 +732,8 @@
                     if(data[11]) {
                         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.edit-product').click();
                     }
+
+                    $('.selectpicker').selectpicker('refresh');
                 }
             }
         });

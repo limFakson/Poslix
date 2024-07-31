@@ -296,11 +296,12 @@ class PurchaseController extends Controller
             $lims_supplier_list = Supplier::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
+            $lims_category_list = Category::where('is_active', true)->get();
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
             $currency_list = Currency::where('is_active', true)->get();
             $custom_fields = CustomField::where('belongs_to', 'purchase')->get();
-            return view('backend.purchase.create', compact('lims_supplier_list', 'lims_warehouse_list', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency_list', 'custom_fields'));
+            return view('backend.purchase.create', compact('lims_supplier_list', 'lims_warehouse_list', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency_list', 'custom_fields', 'lims_category_list'));
         }
         else
             return redirect()->back()->with('not_permitted', 'Sorry! You are not allowed to access this module');
@@ -396,6 +397,13 @@ class PurchaseController extends Controller
                 $unit_operation_value[] = $unit->operation_value;
             }
         }
+        if($lims_product_warehouse_data){
+            foreach($lims_product_warehouse_data as $i){
+                $warehouse = Warehouse::where('id', $i->warehouse_id)->first();
+                $warehouse_array[] = $warehouse->name;
+                $warehouse_array[] = $i->qty;
+            }
+        }
 
         $product[] = implode(",", $unit_name) . ',';
         $product[] = implode(",", $unit_operator) . ',';
@@ -408,14 +416,8 @@ class PurchaseController extends Controller
         $product[] = $lims_product_data->price1;
         $product[] = $lims_product_data->price2;
         $product[] = $lims_product_data->price3;
-        if($lims_product_warehouse_data){
-            foreach($lims_product_warehouse_data as $i){
-                $warehouse = Warehouse::where('id', $i->warehouse_id)->first();
-                $warehouse_array[] = $warehouse->name;
-                $warehouse_array[] = $i->qty;
-            }
-        }
-        $product[]=$warehouse_array;
+        $product[] = $warehouse_array;
+        $product[] = $lims_product_data->category_id;
         return $product;
     }
 
@@ -473,11 +475,16 @@ class PurchaseController extends Controller
         $product_code = $data['product_code'];
         $qty = $data['qty'];
         $recieved = $data['recieved'];
-        $batch_no = $data['batch_no'];
-        $expired_date = $data['expired_date'];
+        if(isset($data['batch_no'])){
+            $batch_no = $data['batch_no'];
+        }
+        if(isset($data['expired_date'])){
+            $expired_date = $data['expired_date'];
+        }
         $purchase_unit = $data['purchase_unit'];
         $net_unit_cost = $data['net_unit_cost'];
         $avg_unit_cost = $data['avg_unit_cost'];
+        $category_data = $data['category_data'];
         $new_price = $data['price'];
         $price1 = $data['price1'];
         $price2 = $data['price2'];
@@ -499,6 +506,7 @@ class PurchaseController extends Controller
             }
             $lims_product_data = Product::find($id);
             $lims_product_data->cost = $net_unit_cost[$i];
+            $lims_product_data->category_id = $category_data[$i];
             $lims_product_data->price = $new_price[$i];
             $lims_product_data->price1 = $price1[$i];
             $lims_product_data->price2 = $price2[$i];
