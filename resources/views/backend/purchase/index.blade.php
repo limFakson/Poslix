@@ -327,6 +327,7 @@
                                 <th>{{trans('file.name')}}</th>
                                 <th>{{trans('file.Code')}}</th>
                                 <th>{{trans('file.Quantity')}}</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -932,7 +933,6 @@
         $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
     });
 
-
     $(document).on("click", ".barcode", function() {
         var purchase = $(this).closest('tr').data('purchase');
         $("table.order-list tbody").empty();
@@ -951,11 +951,13 @@
                 for (var i = 0; i < data[0].length; i += 1) {
                     var productName = data[8][i] ? data[8][i] : 'Unknown';
                     var productCode = data[9][i] ? data[9][i] : 'Unknown';
+                    var qty = data[1][i] ? data[1][i] : 'Unknown';
                     var newRow = $('<tr></tr>');
                     var cols = '';
                     cols += '<td>' + productName + '</td>';
                     cols += '<td class="product-code">' + productCode + '</td>';
-                    cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" /></td>'; // Quantity input
+                    cols += '<td><input type="number" class="form-control qty" name="qty[]" value="'+qty+'" /></td>'; // Quantity input
+                    cols += '<td><button type="button" id="close-btn" style="color: #ff7588;" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button></td>'; // Quantity input
                     newRow.append(cols);
                     $("table.order-list tbody").append(newRow);
                 }
@@ -1084,6 +1086,11 @@
     })
     // Attach event listeners for paper size and quantity change
     $(document).on('change', '#paper-size, .qty', function() {
+        barcodeSearch();
+    });
+
+    $(document).on('click', '.close', function() {
+        $(this).closest('tr').remove();
         barcodeSearch();
     });
 
