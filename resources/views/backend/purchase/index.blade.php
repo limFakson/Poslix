@@ -309,6 +309,71 @@
     </div>
 </div>
 
+<div id="productBarcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="exampleModalLabel" class="modal-title">{{trans('Product Barcode')}}</h5>
+          {{-- <button id="print-btn" type="button" class="btn btn-default btn-sm ml-3"><i class="dripicons-print"></i> {{trans('file.Print')}}</button> --}}
+          <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+        </div>
+        <div class="modal-body">
+            <div class="error-message" style="margin: auto;text-align: center;padding: 3px;"></div>
+            <div class="row">
+                <div class="table-responsive mt-3">
+                    <table id="myTable" class="table table-hover order-list">
+                        <thead>
+                            <tr>
+                                <th>{{trans('file.name')}}</th>
+                                <th>{{trans('file.Code')}}</th>
+                                <th>{{trans('file.Quantity')}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="form-group mt-2">
+                <strong>{{trans('file.Print')}}: </strong>&nbsp;
+                <strong><input type="checkbox" name="name" checked /> {{trans('file.Product Name')}}</strong>&nbsp;
+                <strong><input type="checkbox" name="price" checked/> {{trans('file.Price')}}</strong>&nbsp;
+                <strong><input type="checkbox" name="promo_price"/> {{trans('file.Promotional Price')}}</strong>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <label><strong>Paper Size *</strong></label>
+                    <select class="form-control" name="paper_size" required id="paper-size">
+                        <option value="36">36 mm (1.4 inch)</option>
+                        <option value="24">24 mm (0.94 inch)</option>
+                        <option value="18">18 mm (0.7 inch)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" data-dismiss="modal" value="{{trans('file.submit')}}" class="btn btn-primary" id="submit-button">
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div id="print-barcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="modal_header" class="modal-title">{{trans('file.Barcode')}}</h5>&nbsp;&nbsp;
+                <button id="print-bar" type="button" class="btn btn-default btn-sm"><i class="dripicons-print"></i> {{trans('file.Print')}}</button>
+                <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <div id="label-content" style="display: flex;justify-content: center;align-items: center;flex-direction: column;padding-bototm: 4px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -867,8 +932,173 @@
         $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
     });
 
+
+    $(document).on("click", ".barcode", function() {
+        var purchase = $(this).closest('tr').data('purchase');
+        $("table.order-list tbody").empty();
+        $('.error-message').empty()
+
+        $.get('purchases/product_purchase/' + purchase[3], function(data) {
+            if(data.length === 0){
+                var newpag = '<h5 id="error-message" class="badge-danger" style="margin: auto;text-align: center;padding: 3px;">Purchase does not have products</h5>';
+                $('.error-message').append(newpag);
+                return;
+            }
+
+            var flag = 1;
+
+            if(flag) {
+                for (var i = 0; i < data[0].length; i += 1) {
+                    var productName = data[8][i] ? data[8][i] : 'Unknown';
+                    var productCode = data[9][i] ? data[9][i] : 'Unknown';
+                    var newRow = $('<tr></tr>');
+                    var cols = '';
+                    cols += '<td>' + productName + '</td>';
+                    cols += '<td class="product-code">' + productCode + '</td>';
+                    cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" /></td>'; // Quantity input
+                    newRow.append(cols);
+                    $("table.order-list tbody").append(newRow);
+                }
+                // Trigger barcode search after rows are appended
+                barcodeSearch();
+            }
+        });
+    });
+
+    function barcodeSearch() {
+        var paper_size = $("#paper-size").val();
+        if(paper_size != "0") {
+            var htmltext = '<table class="barcodelist" style="width:378px;font-family:sans-serif;" cellpadding="5px" cellspacing="10px">';
+            $("table.order-list tbody tr").each(function(index, row) {
+                var product_code = $(row).find('td:nth-child(2)').text();
+
+                // Perform the GET request to search for the product
+                $.ajax({
+                    type: 'GET',
+                    async: false,
+                    url: '{{ route('product.search') }}',
+                    data: {
+                        data : product_code
+                    },
+                    success: function(data) {
+                        // Proceed with the rest of the code after successfully getting the product data
+                        var qty = $(row).find('.qty').val();
+                        var product_name = [];
+                        var code = [];
+                        var price = [];
+                        var promo_price = [];
+                        var currency = [];
+                        var currency_position = [];
+                        var barcode_image = [];
+
+                        product_name.push(data[0]);
+                        code.push(data[1]);
+                        price.push(data[2]);
+                        promo_price.push(data[4]);
+                        currency.push(data[5]);
+                        currency_position.push(data[6]);
+                        barcode_image.push(data[3]);
+
+                        for (var i = 0; i < qty; i++){
+                            var index = 0
+                            while(i < qty) {
+                                if (i % 1 == 0) {
+                                    htmltext += '<tr>';
+                                }
+
+                                // 36mm
+                                if (paper_size == 36) {
+                                    htmltext += '<td style="width:38mm; height:25mm; font-size:13px; text-align:center">';
+                                }
+                                // 24mm
+                                else if(paper_size == 24) {
+                                    htmltext += '<td style="width:164px; height:100%; font-size:12px; text-align:center">';
+                                }
+                                // 18mm
+                                else if (paper_size == 18) {
+                                    htmltext += '<td style="width:18mm; height:25mm; font-size:10px; text-align:center">';
+                                }
+
+                                if($('input[name="promo_price"]').is(":checked")) {
+                                    if(currency_position[index] == 'prefix') {
+                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;">'+currency[index]+'<span style="text-decoration: line-through;"><strong> '+price[index]+'</strong></span> '+promo_price[index]+'</span><br>';
+                                    } else {
+                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><span style="text-decoration: line-through;"><strong>'+price[index]+'</strong></span> '+promo_price[index]+' '+currency[index]+'</span><br>';
+                                    }
+                                } else if($('input[name="price"]').is(":checked")) {
+                                    if(currency_position[index] == 'prefix') {
+                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+currency[index]+' '+price[index]+'</strong></span>';
+                                    } else {
+                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+price[index]+' '+currency[index]+'</strong></span>';
+                                    }
+                                }
+
+                                if (paper_size == 18) {
+                                    htmltext += '<img style="max-width:150px; height:100%; max-height:20px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
+                                } else {
+                                    htmltext += '<img style="max-width:190px; height:100%; max-height:35px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
+                                }
+
+                                htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
+                                if($('input[name="code"]').is(":checked")) {
+                                    htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
+                                }
+
+                                if (paper_size == 18) {
+                                    if ($('input[name="name"]').is(":checked")) {
+                                        htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 130px;">' + product_name[index] + '</span><br>';
+                                    }
+                                } else {
+                                    if ($('input[name="name"]').is(":checked")) {
+                                        htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 170px;">' + product_name[index] + '</span><br>';
+                                    }
+                                }
+
+
+                                htmltext += '</td>';
+
+                                if (i % 1 != 0) {
+                                    htmltext += '</tr>';
+                                }
+                                i++;
+                            }
+                        };
+                        // print_barcode();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error retrieving product data:", error);
+                    }
+                });
+
+            });
+            htmltext += '</table>';
+            $('#label-content').html(htmltext);
+        } else {
+            alert('Please select paper size');
+        }
+    }
+
+    $("#submit-button").on("click", function(event) {
+        print_barcode()
+        // $('#print-barcode').modal('show');
+    })
+    // Attach event listeners for paper size and quantity change
+    $(document).on('change', '#paper-size, .qty', function() {
+        barcodeSearch();
+    });
+
+    function print_barcode(){
+          var divToPrint=document.getElementById('print-barcode');
+          var newWin=window.open('','Print-Window');
+          newWin.document.open();
+          newWin.document.write('<style type="text/css">@media print { #modal_header { display: none } #print-bar { display: none } #close-btn { display: none } } table.barcodelist { page-break-inside:auto } table.barcodelist tr { page-break-inside:avoid; page-break-after:auto }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.close();
+          setTimeout(function(){newWin.close();},100);
+    };
+
     if(all_permission.indexOf("purchases-delete") == -1)
         $('.buttons-delete').addClass('d-none');
+
 
 
 </script>

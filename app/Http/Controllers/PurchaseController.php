@@ -257,6 +257,12 @@ class PurchaseController extends Controller
                         '<li>
                             <button type="button" class="add-payment btn btn-link" data-id = "'.$purchase->id.'" data-toggle="modal" data-target="#add-payment"><i class="fa fa-plus"></i> '.trans('file.Add Payment').'</button>
                         </li>';
+                if (in_array("print_barcode", $request['all_permission']))
+                    $nestedData['options'] .=
+                        '<li>
+                            <input type="number" name="purchaseId[]" class="purchaseId hidden" value="'.$purchase->id.'" />
+                            <button type="button" data-target="#productBarcode" data-toggle="modal" class="btn btn-link barcode"><i class="dripicons-print"></i> '.trans('file.print_barcode').'</button>
+                        </li>';
                 if(in_array("purchases-delete", $request['all_permission']))
                     $nestedData['options'] .= \Form::open(["route" => ["purchases.destroy", $purchase->id], "method" => "DELETE"] ).'
                             <li>
@@ -650,6 +656,8 @@ class PurchaseController extends Controller
                 $product_purchase[4][$key] = $product_purchase_data->tax_rate;
                 $product_purchase[5][$key] = $product_purchase_data->discount;
                 $product_purchase[6][$key] = $product_purchase_data->total;
+                $product_purchase[8][$key] = $product->name;
+                $product_purchase[9][$key] = $product->code;
             }
             return $product_purchase;
         }
