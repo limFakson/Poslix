@@ -69,18 +69,39 @@ class CustomerController extends Controller
         DB::purge('tenant');
         DB::reconnect('tenant');
 
+        $customer_datas = DB::connection('tenant')->table('customers')->get();
+
+
         $customerData = $request->validated();
         $now = \Carbon\Carbon::now()->toDateTimeString();
+
+        foreach($customer_datas as $customer_data){
+            if(strtolower($customer_data->name) == strtolower($customerData['name']) && strtolower($customer_data->email) == strtolower($customerData['email'])){
+                $customerResoources = new CustomerResource($customer_data);
+                return Response()->json(['customer'=>$customerResoources]);
+            }elseif(strtolower($customer_data->name) == strtolower($customerData['name']) && $customer_data->phone_number == $customerData['phoneNumber']){
+                $customerResoources = new CustomerResource($customer_data);
+                return Response()->json(['customer'=>$customerResoources]);
+            };
+        };
+
+        if(isset($customerData["userId"])){
+            $user_id = $customerData["userId"];
+        }else{
+            $user_id = DB::connection('tenant')->table('users')->where('name', "Guest")->get();
+            dd($user_id);
+        }
+
         //Find the highest id in the table
         $highestId = DB::connection('tenant')->table('customers')->max('id');
         $newid = $highestId + 1;
         $createData = [
             'id'=>$newid,
             'name' => $customerData['name'],
-            'email' => $customerData['email']?? null,
-            'user_id' => $customerData['userId']?? null,
+            'email' => $customerData['email'],
+            'user_id' => $user_id,
             'company_name' => $customerData['companyName']?? null,
-            'phone_number' => $customerData['phoneNumber']?? null,
+            'phone_number' => $customerData['phoneNumber'],
             'city' => $customerData['city']?? null,
             'tax_no' => $customerData['taxNo']?? null,
             'address' => $customerData['address']?? null,
@@ -92,16 +113,17 @@ class CustomerController extends Controller
             'deposit' => $customerData['deposit']?? null,
             'expense' => $customerData['expence']?? null,
             'wishlist' => $customerData['wishlist']?? null,
-            'is_active' => $customerData['isActive']?? null,
+            'is_active' => Null,
             'created_at'=>$now,
             'updated_at' => $now
         ];
 
         // Attempt to find or create a new customer record
-        $customer = DB::connection('tenant')->table('customers')
-            ->insertGetId($createData);
+        $customer = DB::connection('tenant')->table('customers')->insert($createData);
+        $creatData = DB::connection('tenant')->table('customers')->find($newid);
 
-        return response()->json([$createData], 201);
+        $customerResoources = new CustomerResource($creatData);
+        return response()->json(["customer"=>$customerResoources], 201);
     }
 
     public function show(Request $request, $id)

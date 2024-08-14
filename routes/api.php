@@ -83,3 +83,5 @@ Route::get('/check-env', function() {
 
 // Route::get('/grant-privileges', [DatabaseController::class, 'grantPrivileges']);
 Route::get('/xml-response', [UploadController::class, 'xmlDoc']);
+
+Route::get('dom', [TableController::class, 'domtoPdf']);

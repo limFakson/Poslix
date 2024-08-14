@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\landlord\Tenant;
 use App\Http\Resources\Api\TableResource;
 use App\Http\Resources\Api\TableCollection;
+use Mpdf\Mpdf;
 
 class TableController extends Controller
 {
@@ -36,5 +37,16 @@ class TableController extends Controller
         ->get();
 
         return new TableCollection($table);
+    }
+
+    public function domToPdf()
+    {
+        $newpdf = new Mpdf();
+
+        $html = view('asset.file')->render();
+        $newpdf->WriteHTML($html);
+        $newpdf->Output();
+
+        return $newpdf;
     }
 }

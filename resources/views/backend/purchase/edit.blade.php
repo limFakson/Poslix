@@ -99,7 +99,7 @@
                                                         @endforeach
                                                     @elseif($field->type == 'radio_button')
                                                         <br>
-                                                        <?php 
+                                                        <?php
                                                         $option_values = explode(",", $field->option_value);
                                                         ?>
                                                         @foreach($option_values as $value)
@@ -151,9 +151,15 @@
                                                         <th>{{trans('file.Code')}}</th>
                                                         <th>{{trans('file.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{trans('file.Recieved')}}</th>
-                                                        <th>{{trans('file.Batch No')}}</th>
-                                                        <th>{{trans('file.Expired Date')}}</th>
+                                                        {{-- <th>{{trans('file.Batch No')}}</th> --}}
+                                                        {{-- <th>{{trans('file.Expired Date')}}</th> --}}
+                                                        <th>{{trans('file.category')}}</th>
+                                                        <th>{{trans('file.price')}}</th>
+                                                        <th>{{trans('file.Price1')}}</th>
+                                                        <th>{{trans('file.Price2')}}</th>
+                                                        <th>{{trans('file.Price3')}}</th>
                                                         <th>{{trans('file.Net Unit Cost')}}</th>
+                                                        <th>{{trans('file.Avg Unit Cost')}}</th>
                                                         <th>{{trans('file.Discount')}}</th>
                                                         <th>{{trans('file.Tax')}}</th>
                                                         <th>{{trans('file.Subtotal')}}</th>
@@ -203,6 +209,7 @@
                                                             $product_cost = (($product_purchase->total + ($product_purchase->discount / $product_purchase->qty)) / $product_purchase->qty) / $unit_operation_value[0];
                                                         }
 
+                                                        $avg_unit_cost = $product_purchase->total / $product_purchase->qty;
 
                                                         $temp_unit_name = $unit_name = implode(",",$unit_name) . ',';
 
@@ -211,6 +218,7 @@
                                                         $temp_unit_operation_value = $unit_operation_value =  implode(",",$unit_operation_value) . ',';
 
                                                         $product_batch_data = \App\Models\ProductBatch::select('batch_no', 'expired_date')->find($product_purchase->product_batch_id);
+                                                        $lims_category_list = \App\Models\Category::where('is_active', true)->get();
                                                     ?>
                                                         <td>{{$product_data->name}} <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button> </td>
                                                         <td>{{$product_data->code}}</td>
@@ -219,21 +227,38 @@
                                                         @if($product_purchase->product_batch_id)
                                                         <td>
                                                             <input type="hidden" name="product_batch_id[]" value="{{$product_purchase->product_batch_id}}">
-                                                            <input type="text" class="form-control batch-no" name="batch_no[]" value="{{$product_batch_data->batch_no}}" required/>
+                                                            <input type="text" class="form-control batch-no" name="batch_no[]" value="{{$product_batch_data->batch_no}}" />
                                                         </td>
                                                         <td>
-                                                            <input type="text" class="form-control expired-date" name="expired_date[]" value="{{$product_batch_data->expired_date}}" required/>
+                                                            <input type="text" class="form-control expired-date" name="expired_date[]" value="{{$product_batch_data->expired_date}}" />
                                                         </td>
                                                         @else
-                                                        <td>
+                                                        <td class="hidden">
                                                             <input type="hidden" name="product_batch_id[]">
                                                             <input type="text" class="form-control batch-no" name="batch_no[]" disabled />
                                                         </td>
-                                                        <td>
+                                                        <td class="hidden">
                                                             <input type="text" class="form-control expired-date" name="expired_date[]" disabled />
                                                         </td>
                                                         @endif
-                                                        <td class="net_unit_cost">{{ number_format((float)$product_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
+                                                        <td class="category">
+                                                            <div class="form-group">
+                                                                <select name="category_data[]" class="form-control selectpicker">
+                                                                    @foreach($lims_category_list as $key)
+                                                                        <option value="{{ $key->id }}"
+                                                                            {{ $product_data->category_id == $key->id ? 'selected' : '' }}>
+                                                                            {{ $key->name }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </td>
+                                                        <td class="price"><input type="text" name="price[]" class="form-control" value="{{ $product_data->price }}" /> </td>
+                                                        <td class="price1"><input type="text" name="price1[]" class="form-control" value="{{ $product_data->price1 }}" /> </td>
+                                                        <td class="price2"><input type="text" name="price2[]" class="form-control" value="{{ $product_data->price2 }}" /> </td>
+                                                        <td class="price3"><input type="text" name="price3[]" class="form-control" value="{{ $product_data->price3 }}" /></td>
+                                                        <td class="net_unit_cost"><input type="text" class="purchase_cost_input form-control" value="{{ number_format((float)$product_purchase->net_unit_cost, $general_setting->decimal, '.', '')}}"></td>
+                                                        <td class="avg_unit_cost">{{ number_format((float) $avg_unit_cost,$general_setting->decimal, '.','')}}</td>
                                                         <td class="discount">{{ number_format((float)$product_purchase->discount, $general_setting->decimal, '.', '')}}</td>
                                                         <td class="tax">{{ number_format((float)$product_purchase->tax, $general_setting->decimal, '.', '')}}</td>
                                                         <td class="sub-total">{{ number_format((float)$product_purchase->total, $general_setting->decimal, '.', '')}}</td>
@@ -245,6 +270,9 @@
                                                         <input type="hidden" class="purchase-unit-operator" value="{{$unit_operator}}"/>
                                                         <input type="hidden" class="purchase-unit-operation-value" value="{{$unit_operation_value}}"/>
                                                         <input type="hidden" class="net_unit_cost" name="net_unit_cost[]" value="{{$product_purchase->net_unit_cost}}" />
+                                                        <input type="hidden" id="oldUnitCost" class="static_cost" name="" value="{{$product_purchase->net_unit_cost}}" />
+                                                        <input type="hidden" id="oldStockQty" class="static_qty" name="" value="{{$product_data->qty}}" />
+                                                        <input type="hidden" class="avg_unit_cost" name="avg_unit_cost[]" value="" />
                                                         <input type="hidden" class="discount-value" name="discount[]" value="{{$product_purchase->discount}}" />
                                                         <input type="hidden" class="tax-rate" name="tax_rate[]" value="{{$product_purchase->tax_rate}}"/>
                                                         @if($tax)
@@ -263,6 +291,10 @@
                                                 <tfoot class="tfoot active">
                                                     <th colspan="2">{{trans('file.Total')}}</th>
                                                     <th id="total-qty">{{$lims_purchase_data->total_qty}}</th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -432,6 +464,9 @@
         </div>
     </div>
 </section>
+<input type="hidden" id="oldStockQty" name="oldStockQty" />
+<input type="hidden" id="oldUnitCost" name="oldUnitCost" />
+
 
 
 @endsection
@@ -713,6 +748,9 @@ function productSearch(data) {
             data: data
         },
         success: function(data) {
+            const oldStockQty = data[12];
+            const oldUnitCost = data[2];
+
             var flag = 1;
             $(".product-code").each(function(i) {
                 if ($(this).val() == data[1]) {
@@ -726,13 +764,26 @@ function productSearch(data) {
                     flag = 0;
                 }
             });
+
+            if (Array.isArray(data[17]) && data[17].length >= 2) {
+                var warehouseDetails = '';
+                for (var i = 0; i < data[17].length; i += 2) {
+                    var warehouse_name = data[17][i] ? data[17][i] : 'Unknown';
+                    var qty = data[17][i + 1] ? data[17][i + 1] : 0;
+                    warehouseDetails += '<span style="padding-top:3px;">' + warehouse_name + ' ' +':'+ ' '+ qty + '</span><br>';
+                }
+            } else {
+                var warehouseDetails = '';
+            }
+
             $("input[name='product_code_name']").val('');
             if(flag){
+                var selectedCategoryId = data[18];
                 var newRow = $("<tr>");
                 var cols = '';
                 temp_unit_name = (data[6]).split(',');
                 cols += '<td>' + data[0] + '<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button></td>';
-                cols += '<td>' + data[1] + '</td>';
+                cols += '<td>' + data[1] + warehouseDetails +'</td>';
                 cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" step="any" required /></td>';
                 if($('select[name="status"]').val() == 1)
                     cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="1" step="any" /></td>';
@@ -741,14 +792,27 @@ function productSearch(data) {
                 else
                     cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="0" step="any"/></td>';
                 if(data[10]) {
-                    cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
-                    cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
+                    cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" /></td>';
+                    cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" /></td>';
                 }
                 else {
-                    cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
-                    cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
+                    cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
+                    cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
                 }
-                cols += '<td class="net_unit_cost"></td>';
+
+                cols += '<td><div class="form-group"><select name="category_data[]" class="form-control selectpicker">';
+                @foreach($lims_category_list as $key)
+                var isSelected = {{ $key->id }} == selectedCategoryId ? 'selected' : '';
+                cols += '<option value="{{ $key->id }}" ' + isSelected + '>{{ $key->name }}</option>';
+                @endforeach
+                cols += '</select></div></td>';
+                cols += '</select></div></td>';
+                cols += '<td><input type="text" class="form-control price" value="'+ data[13] +'" name="price[]" /></td>';
+                cols += '<td><input type="text" class="form-control price1" value="'+ data[14] +'" name="price1[]" /></td>';
+                cols += '<td><input type="text" class="form-control price2" value="'+ data[15] +'" name="price2[]" /></td>';
+                cols += '<td><input type="text" class="form-control price3" value="'+ data[16] +'" name="price3[]" /></td>';
+                cols += '<td class="net_unit_cost"><input type="text" class="net_unit_cost cost_input form-control" /></td>';
+                cols += '<td class="avg_unit_cost"></td>';
                 cols += '<td class="discount">{{number_format(0, $general_setting->decimal, '.', '')}}</td>';
                 cols += '<td class="tax"></td>';
                 cols += '<td class="sub-total"></td>';
@@ -757,6 +821,9 @@ function productSearch(data) {
                 cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
                 cols += '<input type="hidden" class="purchase-unit" name="purchase_unit[]" value="' + temp_unit_name[0] + '"/>';
                 cols += '<input type="hidden" class="net_unit_cost" name="net_unit_cost[]" />';
+                cols += '<input type="hidden" id="oldStockQty" name="oldStockQty" value="'+oldStockQty+'" />';
+                cols += '<input type="hidden" id="oldUnitCost" name="oldUnitCost" value="'+oldUnitCost+'" />';
+                cols += '<input type="hidden" class="avg_unit_cost" name="avg_unit_cost[]" />';
                 cols += '<input type="hidden" class="discount-value" name="discount[]" />';
                 cols += '<input type="hidden" class="tax-rate" name="tax_rate[]" value="' + data[3] + '"/>';
                 cols += '<input type="hidden" class="tax-value" name="tax[]" />';
@@ -781,6 +848,7 @@ function productSearch(data) {
                 if(data[11]) {
                     $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.edit-product').click();
                 }
+                $('.selectpicker').selectpicker('refresh');
             }
         }
     });
@@ -818,7 +886,7 @@ function calculateRowProductData(quantity) {
         var tax = net_unit_cost * quantity * (tax_rate[rowindex] / 100);
         var sub_total = (net_unit_cost * quantity) + tax;
 
-        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').text(net_unit_cost.toFixed({{$general_setting->decimal}}));
+        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));
@@ -830,7 +898,7 @@ function calculateRowProductData(quantity) {
         var tax = (sub_total_unit - net_unit_cost) * quantity;
         var sub_total = sub_total_unit * quantity;
 
-        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').text(net_unit_cost.toFixed({{$general_setting->decimal}}));
+        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));
@@ -838,7 +906,30 @@ function calculateRowProductData(quantity) {
         $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.subtotal-value').val(sub_total.toFixed({{$general_setting->decimal}}));
     }
 
+    let newStockQty = parseInt(quantity);
+    let newUnitCost = parseFloat(net_unit_cost);
+    calculateAvgUnitCost(newStockQty, newUnitCost)
     calculateTotal();
+}
+
+function calculateAvgUnitCost(newStockQty, newUnitCost) {
+    var oldStockQty = parseInt($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('#oldStockQty').val());
+    var oldUnitCost = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('#oldUnitCost').val());
+
+    let oldStockTotalCost = oldStockQty * oldUnitCost;
+
+    let newStockTotalCost = newStockQty * newUnitCost;
+
+    let totalStockQty = oldStockQty + newStockQty;
+
+    let totalCost = oldStockTotalCost + newStockTotalCost;
+    console.log(oldStockQty,oldUnitCost,newStockQty,newUnitCost);
+
+    let avgUnitCost = totalCost / totalStockQty;
+
+    $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.avg_unit_cost').text(avgUnitCost.toFixed({{$general_setting->decimal}}));
+    $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.avg_unit_cost').val(avgUnitCost.toFixed({{$general_setting->decimal}}));
+    // return avgUnitCost;
 }
 
 function unitConversion() {
@@ -893,6 +984,7 @@ function calculateTotal() {
     calculateGrandTotal();
 }
 
+
 function calculateGrandTotal() {
 
     var item = $('table.order-list tbody tr:last').index();
@@ -934,6 +1026,48 @@ $('input[name="shipping_cost"]').on("input", function() {
 $('select[name="order_tax_rate"]').on("change", function() {
     calculateGrandTotal();
 });
+
+$("#myTable").on('input', '.cost_input', function() {
+    rowindex = $(this).closest('tr').index();
+    var sta_qty = $('.qty').val()
+
+    var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
+    var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(","));
+    row_unit_operation_value = parseFloat(row_unit_operation_value);
+
+    if (row_unit_operator == '*') {
+        product_cost[rowindex] = $(this).val() / row_unit_operation_value;
+    } else {
+        product_cost[rowindex] = $(this).val() * row_unit_operation_value;
+    }
+    checkQuantity(sta_qty, false);
+});
+
+$("table.order-list").on('input', '.purchase_cost_input', function(){
+    rowindex = $(this).closest('tr').index();
+    var this_qty = $(this).parent().parent().find('.qty').val()
+    console.log(this_qty)
+
+    var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
+    var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(","));
+    row_unit_operation_value = parseFloat(row_unit_operation_value);
+    var tax_rate_all = <?php echo json_encode($tax_rate_all) ?>;
+
+
+    tax_rate[rowindex] = parseFloat(tax_rate_all[$('select[name="edit_tax_rate"]').val()]);
+    tax_name[rowindex] = $('select[name="edit_tax_rate"] option:selected').text();
+
+
+    if (row_unit_operator == '*') {
+        product_cost[rowindex] = $(this).val() / row_unit_operation_value;
+    } else {
+        product_cost[rowindex] = $(this).val() * row_unit_operation_value;
+    }
+    console.log(product_cost[rowindex]);
+    product_discount[rowindex] = $('.discount-value').val();
+
+    checkQuantity(this_qty, false)
+})
 
 $(window).keydown(function(e){
     if (e.which == 13) {

@@ -11,6 +11,8 @@
             width: 100%;
             height: 100%;
             color: #5e5873;
+            direction: rtl;
+            text-align: right;
         }
         main{
             margin: 3rem;

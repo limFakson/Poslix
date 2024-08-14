@@ -333,6 +333,8 @@
                         <tbody>
                         </tbody>
                     </table>
+                    <div class=" loading-indicator" id="loader">
+                    </div>
                 </div>
             </div>
             <div class="form-group mt-2">
@@ -375,10 +377,13 @@
     </div>
 </div>
 
+<div class="barcode-data hidden"></div>
+
 @endsection
 
 @push('scripts')
 <script type="text/javascript">
+    $('.loading-indicator').hide()
 
     $(".daterangepicker-field").daterangepicker({
       callback: function(startDate, endDate, period){
@@ -933,44 +938,53 @@
         $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
     });
 
-    $(document).on("click", ".barcode", function() {
-        var purchase = $(this).closest('tr').data('purchase');
-        $("table.order-list tbody").empty();
-        $('.error-message').empty()
+$(document).on("click", ".barcode", function() {
+    var purchase = $(this).closest('tr').data('purchase');
+    $("table.order-list tbody").empty();
+    $('.error-message').empty();
 
-        $.get('purchases/product_purchase/' + purchase[3], function(data) {
-            if(data.length === 0){
-                var newpag = '<h5 id="error-message" class="badge-danger" style="margin: auto;text-align: center;padding: 3px;">Purchase does not have products</h5>';
-                $('.error-message').append(newpag);
-                return;
+    // Create a Deferred object
+    var deferred = $.Deferred();
+
+    $.get('purchases/product_purchase/' + purchase[3], function(data) {
+        if(data.length === 0){
+            var newpag = '<h5 id="error-message" class="badge-danger" style="margin: auto;text-align: center;padding: 3px;">Purchase does not have products</h5>';
+            $('.error-message').append(newpag);
+            return;
+        }
+
+        var flag = 1;
+
+        if(flag) {
+            for (var i = 0; i < data[0].length; i += 1) {
+                var productName = data[8][i] ? data[8][i] : 'Unknown';
+                var productCode = data[9][i] ? data[9][i] : 'Unknown';
+                var qty = data[1][i] ? data[1][i] : 'Unknown';
+                var newRow = $('<tr></tr>');
+                var cols = '';
+                cols += '<td>' + productName + '</td>';
+                cols += '<td class="product-code">' + productCode + '</td>';
+                cols += '<td><input type="number" class="form-control qty" name="qty[]" value="'+qty+'" /></td>'; // Quantity input
+                cols += '<td><button type="button" id="close-btn rowclose" style="color: #ff7588;" class="close rowDelete"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button></td>'; // Quantity input
+                newRow.append(cols);
+                $("table.order-list tbody").append(newRow);
             }
-
-            var flag = 1;
-
-            if(flag) {
-                for (var i = 0; i < data[0].length; i += 1) {
-                    var productName = data[8][i] ? data[8][i] : 'Unknown';
-                    var productCode = data[9][i] ? data[9][i] : 'Unknown';
-                    var qty = data[1][i] ? data[1][i] : 'Unknown';
-                    var newRow = $('<tr></tr>');
-                    var cols = '';
-                    cols += '<td>' + productName + '</td>';
-                    cols += '<td class="product-code">' + productCode + '</td>';
-                    cols += '<td><input type="number" class="form-control qty" name="qty[]" value="'+qty+'" /></td>'; // Quantity input
-                    cols += '<td><button type="button" id="close-btn" style="color: #ff7588;" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button></td>'; // Quantity input
-                    newRow.append(cols);
-                    $("table.order-list tbody").append(newRow);
-                }
-                // Trigger barcode search after rows are appended
-                barcodeSearch();
-            }
-        });
+            // Resolve the Deferred object after rows are appended
+            deferred.resolve();
+            $('.loading-indicator').show();
+        }
     });
+    $.when(deferred).done(function() {
+        barcodeSearch();
+    });
+});
 
     function barcodeSearch() {
         var paper_size = $("#paper-size").val();
+        $('.barcode-data > div').each(function(){
+            $(this).remove()
+        })
         if(paper_size != "0") {
-            var htmltext = '<table class="barcodelist" style="width:378px;font-family:sans-serif;" cellpadding="5px" cellspacing="10px">';
             $("table.order-list tbody tr").each(function(index, row) {
                 var product_code = $(row).find('td:nth-child(2)').text();
 
@@ -1001,70 +1015,22 @@
                         currency_position.push(data[6]);
                         barcode_image.push(data[3]);
 
-                        for (var i = 0; i < qty; i++){
-                            var index = 0
-                            while(i < qty) {
-                                if (i % 1 == 0) {
-                                    htmltext += '<tr>';
-                                }
+                        var htmltext = $('<div></div>');
+                        htmltext.attr('id', code);
+                        htmltext.attr('data-product-name', product_name);
 
-                                // 36mm
-                                if (paper_size == 36) {
-                                    htmltext += '<td style="width:38mm; height:25mm; font-size:13px; text-align:center">';
-                                }
-                                // 24mm
-                                else if(paper_size == 24) {
-                                    htmltext += '<td style="width:164px; height:100%; font-size:12px; text-align:center">';
-                                }
-                                // 18mm
-                                else if (paper_size == 18) {
-                                    htmltext += '<td style="width:18mm; height:25mm; font-size:10px; text-align:center">';
-                                }
+                        var col = ''
+                        col += '<input type="number" name="bar-qty[]" value="'+qty+'" id="bar-qty"/>'
+                        col += '<input type="text" name="product_name[]" value="'+product_name+'" id="product_name"/>'
+                        col += '<input name="code[]" value="'+code+'" id="code"/>'
+                        col += '<input name="price[]" value="'+price+'" id="price"/>'
+                        col += '<input name="promo_price[]" value="'+promo_price+'" id="promo_price"/>'
+                        col += '<input name="currency[]" value="'+currency+'" id="currency"/>'
+                        col += '<input name="currency_position[]" value="'+currency_position+'" id="currency_position"/>'
+                        col += '<input name="barcode_image[]" value="'+barcode_image+'" id="barcode_image"/>'
 
-                                if($('input[name="promo_price"]').is(":checked")) {
-                                    if(currency_position[index] == 'prefix') {
-                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;">'+currency[index]+'<span style="text-decoration: line-through;"><strong> '+price[index]+'</strong></span> '+promo_price[index]+'</span><br>';
-                                    } else {
-                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><span style="text-decoration: line-through;"><strong>'+price[index]+'</strong></span> '+promo_price[index]+' '+currency[index]+'</span><br>';
-                                    }
-                                } else if($('input[name="price"]').is(":checked")) {
-                                    if(currency_position[index] == 'prefix') {
-                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+currency[index]+' '+price[index]+'</strong></span>';
-                                    } else {
-                                        htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>'+price[index]+' '+currency[index]+'</strong></span>';
-                                    }
-                                }
+                        $('.barcode-data').append(htmltext.append(col));
 
-                                if (paper_size == 18) {
-                                    htmltext += '<img style="max-width:150px; height:100%; max-height:20px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
-                                } else {
-                                    htmltext += '<img style="max-width:190px; height:100%; max-height:35px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcode_image[index] + '" alt="barcode" />';
-                                }
-
-                                htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
-                                if($('input[name="code"]').is(":checked")) {
-                                    htmltext += '<span style="font-size:11px;">' + code[index] + '</span>';
-                                }
-
-                                if (paper_size == 18) {
-                                    if ($('input[name="name"]').is(":checked")) {
-                                        htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 130px;">' + product_name[index] + '</span><br>';
-                                    }
-                                } else {
-                                    if ($('input[name="name"]').is(":checked")) {
-                                        htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 170px;">' + product_name[index] + '</span><br>';
-                                    }
-                                }
-
-
-                                htmltext += '</td>';
-
-                                if (i % 1 != 0) {
-                                    htmltext += '</tr>';
-                                }
-                                i++;
-                            }
-                        };
                         // print_barcode();
                     },
                     error: function(xhr, status, error) {
@@ -1073,25 +1039,128 @@
                 });
 
             });
-            htmltext += '</table>';
-            $('#label-content').html(htmltext);
+
+         $('.loading-indicator').hide();
+
         } else {
             alert('Please select paper size');
         }
     }
 
-    $("#submit-button").on("click", function(event) {
-        print_barcode()
-        // $('#print-barcode').modal('show');
-    })
-    // Attach event listeners for paper size and quantity change
-    $(document).on('change', '#paper-size, .qty', function() {
-        barcodeSearch();
+function generateBarcodeHtml() {
+    var paper_size = $("#paper-size").val();
+    var htmltext = '<table class="barcodelist" style="width:378px;font-family:sans-serif;padding-bottom:10px;" cellpadding="5px" cellspacing="10px">';
+
+    $('.barcode-data > div').each(function(index, element) {
+        var qty = $(element).find('input[name="bar-qty[]"]').val();
+        var productName = $(element).find('input[name="product_name[]"]').val();
+        var code = $(element).find('input[name="code[]"]').val();
+        var price = $(element).find('input[name="price[]"]').val();
+        var promoPrice = $(element).find('input[name="promo_price[]"]').val();
+        var currency = $(element).find('input[name="currency[]"]').val();
+        var currencyPosition = $(element).find('input[name="currency_position[]"]').val();
+        var barcodeImage = $(element).find('input[name="barcode_image[]"]').val();
+
+        for (var i = 0; i < qty; i++) {
+            if (i % 1 === 0) {
+                htmltext += '<tr>';
+            }
+
+            // 36mm
+            if (paper_size == 36) {
+                htmltext += '<td style="width:38mm; height:25mm; font-size:13px; text-align:center">';
+            }
+            // 24mm
+            else if (paper_size == 24) {
+                htmltext += '<td style="width:164px; height:100%; font-size:12px; text-align:center">';
+            }
+            // 18mm
+            else if (paper_size == 18) {
+                htmltext += '<td style="width:18mm; height:25mm; font-size:10px; text-align:center">';
+            }
+
+            if ($('input[name="promo_price"]').is(":checked")) {
+                if (currencyPosition === 'prefix') {
+                    htmltext += '<span style="display: block;text-align: center;padding: 4px;">' + currency + '<span style="text-decoration: line-through;"><strong> ' + price + '</strong></span> ' + promoPrice + '</span><br>';
+                } else {
+                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><span style="text-decoration: line-through;"><strong>' + price + '</strong></span> ' + promoPrice + ' ' + currency + '</span><br>';
+                }
+            } else if ($('input[name="price"]').is(":checked")) {
+                if (currencyPosition === 'prefix') {
+                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>' + currency + ' ' + price + '</strong></span>';
+                } else {
+                    htmltext += '<span style="display: block;text-align: center;padding: 4px;"><strong>' + price + ' ' + currency + '</strong></span>';
+                }
+            }
+
+            if (paper_size == 18) {
+                htmltext += '<img style="max-width:150px; height:100%; max-height:20px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcodeImage + '" alt="barcode" />';
+            } else {
+                htmltext += '<img style="max-width:190px; height:100%; max-height:35px; display: block; margin: 0 auto; margin-bottom: 2px;" src="data:image/png;base64,' + barcodeImage + '" alt="barcode" />';
+            }
+
+            htmltext += '<span style="font-size:11px;">' + code + '</span>';
+            if ($('input[name="code"]').is(":checked")) {
+                htmltext += '<span style="font-size:11px;">' + code + '</span>';
+            }
+
+            if (paper_size == 18) {
+                if ($('input[name="name"]').is(":checked")) {
+                    htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 130px;">' + productName + '</span><br>';
+                }
+            } else {
+                if ($('input[name="name"]').is(":checked")) {
+                    htmltext += '<span style="display: block; text-align: center;margin: auto;font-weight: 500;width: 170px;">' + productName + '</span><br>';
+                }
+            }
+
+            htmltext += '</td>';
+
+            if (i % 1 !== 0) {
+                htmltext += '</tr>';
+            }
+        }
     });
 
-    $(document).on('click', '.close', function() {
-        $(this).closest('tr').remove();
-        barcodeSearch();
+    htmltext += '</table>';
+    $('#label-content').html(htmltext);
+}
+
+    $("#submit-button").on("click", function(event) {
+        generateBarcodeHtml();
+        // $('#print-barcode').modal('show');
+        setTimeout(()=>{
+            print_barcode()
+        }, 400)
+    })
+    $(document).on('change', '#paper-size', function() {
+        var newValue = $(this).val();
+        $("#paper-size").val(newValue)
+    });
+    // Attach event listeners for paper size and quantity change
+    $(document).on('change', '.qty', function() {
+        var newValue = $(this).val();
+        var productCode = $(this).closest('tr').find('.product-code').text().trim();
+        $('.barcode-data > div').each(function() {
+            var divProductCode = $(this).attr('id');
+            if (divProductCode === productCode) {
+                $(this).find('input[name="bar-qty[]"]').val(newValue);
+            }
+        });
+    });
+
+    $(document).on('click', '.rowDelete', function() {
+        var tr = $(this).closest('tr');
+        var productCode = tr.find('.product-code').text();
+
+        tr.remove();
+
+        $('.barcode-data > div').each(function() {
+            var divProductCode = $(this).attr('id');
+            if (divProductCode === productCode) {
+                $(this).remove();
+            }
+        });
     });
 
     function print_barcode(){

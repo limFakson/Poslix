@@ -23,7 +23,7 @@ class StoreCustomerRequest extends BaseFormRequest
     {
         return [
             'customerGroupId' => 'required',
-            'userId' => 'required',
+            'userId' => 'nullable',
             'name' => 'required|string|max:255',
             'companyName' => 'nullable|string|max:255',
             'email' => 'required|string|max:255',

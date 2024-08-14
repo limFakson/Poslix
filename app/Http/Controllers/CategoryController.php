@@ -210,7 +210,7 @@ class CategoryController extends Controller
     {
         /*if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', 'This feature is disable for demo!');*/
-        
+
         $this->validate($request,[
             'name' => [
                 'max:255',
@@ -240,7 +240,7 @@ class CategoryController extends Controller
                 $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
                 $image->move('public/images/category', $imageName);
             }
-            Image::make('public/images/category/'. $imageName)->fit(100, 100)->save(); 
+            Image::make('public/images/category/'. $imageName)->fit(100, 100)->save();
             $input['image'] = $imageName;
         }
 
@@ -261,7 +261,7 @@ class CategoryController extends Controller
                 $iconName = $this->getTenantId() . '_' . $iconName . '.' . $ext;
                 $icon->move('public/images/category/icons/', $iconName);
             }
-            Image::make('public/images/category/icons/'. $iconName)->fit(100, 100)->save();            
+            Image::make('public/images/category/icons/'. $iconName)->fit(100, 100)->save();
             $input['icon'] = $iconName;
         }
         if(!isset($request->featured) && \Schema::hasColumn('categories', 'featured') ){
@@ -282,7 +282,7 @@ class CategoryController extends Controller
         }
 
         DB::table('categories')->where('id', $request->category_id)->update($input);
-        
+
         return redirect('category')->with('message', 'Category updated successfully');
     }
 

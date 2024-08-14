@@ -403,12 +403,14 @@ class PurchaseController extends Controller
                 $unit_operation_value[] = $unit->operation_value;
             }
         }
-        if($lims_product_warehouse_data){
+        if(!$lims_product_warehouse_data->isEmpty()){
             foreach($lims_product_warehouse_data as $i){
                 $warehouse = Warehouse::where('id', $i->warehouse_id)->first();
                 $warehouse_array[] = $warehouse->name;
                 $warehouse_array[] = $i->qty;
             }
+        }else{
+            $warehouse_array[] = Null;
         }
 
         $product[] = implode(",", $unit_name) . ',';
@@ -906,6 +908,7 @@ class PurchaseController extends Controller
             }
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
 
+
             $data['created_at'] = date("Y-m-d", strtotime(str_replace("/", "-", $data['created_at'])));
             $product_id = $data['product_id'];
             $product_code = $data['product_code'];
@@ -915,6 +918,11 @@ class PurchaseController extends Controller
             $expired_date = $data['expired_date'];
             $purchase_unit = $data['purchase_unit'];
             $net_unit_cost = $data['net_unit_cost'];
+            $cost = $data['price'];
+            $price1 = $data['price1'];
+            $price2 = $data['price2'];
+            $price3 = $data['price3'];
+            $category_data = $data['category_data'];
             $discount = $data['discount'];
             $tax_rate = $data['tax_rate'];
             $tax = $data['tax'];
@@ -983,6 +991,7 @@ class PurchaseController extends Controller
             }
 
             foreach ($product_id as $key => $pro_id) {
+
                 $lims_purchase_unit_data = Unit::where('unit_name', $purchase_unit[$key])->first();
                 if ($lims_purchase_unit_data->operator == '*') {
                     $new_recieved_value = $recieved[$key] * $lims_purchase_unit_data->operation_value;
@@ -991,6 +1000,14 @@ class PurchaseController extends Controller
                 }
 
                 $lims_product_data = Product::find($pro_id);
+
+                $lims_product_data->cost = $net_unit_cost[$key];
+                $lims_product_data->price =  $cost[$key];
+                $lims_product_data->price1 = $price1[$key];
+                $lims_product_data->price2 = $price2[$key];
+                $lims_product_data->price3 = $price3[$key];
+                $lims_product_data->category_id = $category_data[$key];
+
                 $price = null;
                 //dealing with product barch
                 if($batch_no[$key]) {
@@ -1084,6 +1101,7 @@ class PurchaseController extends Controller
 
                 $lims_product_data->save();
                 $lims_product_warehouse_data->save();
+
 
                 $product_purchase['purchase_id'] = $id ;
                 $product_purchase['product_id'] = $pro_id;

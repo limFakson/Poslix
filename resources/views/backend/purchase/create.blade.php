@@ -141,6 +141,7 @@
                                             <button class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
                                             <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="Please type product code and select..." class="form-control" />
                                         </div>
+                                        <div id="error-msg"></div>
                                     </div>
                                 </div>
                                 <div class="row mt-4">
@@ -348,8 +349,7 @@
             </div>
         </div>
     </div>
-    <input type="hidden" id="oldStockQty" name="oldStockQty" />
-    <input type="hidden" id="oldUnitCost" name="oldUnitCost" />
+
 </section>
 
 @endsection
@@ -606,21 +606,6 @@
         checkQuantity(edit_qty, false);
     });
 
-    $("#myTable").on('input', '.cost_input', function() {
-        rowindex = $(this).closest('tr').index();
-        var sta_qty = $('.qty').val()
-
-        var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
-        var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(","));
-        row_unit_operation_value = parseFloat(row_unit_operation_value);
-
-        if (row_unit_operator == '*') {
-            product_cost[rowindex] = $(this).val() / row_unit_operation_value;
-        } else {
-            product_cost[rowindex] = $(this).val() * row_unit_operation_value;
-        }
-        checkQuantity(sta_qty, false);
-    });
 
     function productSearch(data) {
         $.ajax({
@@ -633,9 +618,6 @@
                 const oldStockQty = data[12];
                 const oldUnitCost = data[2];
 
-                // Set the values in the hidden inputs
-                $('#oldStockQty').val(oldStockQty);
-                $('#oldUnitCost').val(oldUnitCost);
                 var flag = 1;
                 $(".product-code").each(function(i) {
                     if ($(this).val() == data[1]) {
@@ -679,8 +661,8 @@
                     else
                         cols += '<td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="0" step="any"/></td>';
                     if(data[10]) {
-                        cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
-                        cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
+                        cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" /></td>';
+                        cols += '<td class="hidden"><input type="text" class="form-control expired-date" name="expired_date[]" /></td>';
                     }
                     else {
                         cols += '<td class="hidden"><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
@@ -697,7 +679,7 @@
                     cols += '<td><input type="text" class="form-control price1" value="'+ data[14] +'" name="price1[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price2" value="'+ data[15] +'" name="price2[]" required/></td>';
                     cols += '<td><input type="text" class="form-control price3" value="'+ data[16] +'" name="price3[]" required/></td>';
-                    cols += '<td><input type="text" class="form-control cost_input" id="net_unit_input" value="'+ old_unit_cost +'" required/></td>';
+                    cols += '<td><input type="text" class="form-control cost_input net_unit_cost" id="net_unit_input" value="'+ old_unit_cost +'" required/></td>';
                     cols += '<td class="avg_unit_cost"></td>';
                     cols += '<td class="discount">{{number_format(0, $general_setting->decimal, '.', '')}}</td>';
                     cols += '<td class="tax"></td>';
@@ -707,6 +689,8 @@
                     cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
                     cols += '<input type="hidden" class="purchase-unit" name="purchase_unit[]" value="' + temp_unit_name[0] + '"/>';
                     cols += '<input type="hidden" class="net_unit_cost" name="net_unit_cost[]" />';
+                    cols += '<input type="hidden" id="oldStockQty" name="oldStockQty" value="'+oldStockQty+'" />';
+                    cols += '<input type="hidden" id="oldUnitCost" name="oldUnitCost" value="'+oldUnitCost+'" />';
                     cols += '<input type="hidden" class="avg_unit_cost" name="avg_unit_cost[]" />';
                     cols += '<input type="hidden" class="discount-value" name="discount[]" />';
                     cols += '<input type="hidden" class="tax-rate" name="tax_rate[]" value="' + data[3] + '"/>';
@@ -735,9 +719,31 @@
 
                     $('.selectpicker').selectpicker('refresh');
                 }
+            },
+            error: function(response){
+                $('#error-msg').text(response.responseJSON.error)
+                console.log(response.responseJSON.error)
             }
         });
     }
+
+    $("#myTable").on('input', '.cost_input', function() {
+        rowindex = $(this).closest('tr').index();
+        var sta_qty = $(this).parent().parent().find('.qty').val()
+        console.log(sta_qty)
+
+        var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
+        var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(","));
+        row_unit_operation_value = parseFloat(row_unit_operation_value);
+
+        if (row_unit_operator == '*') {
+            product_cost[rowindex] = $(this).val() / row_unit_operation_value;
+        } else {
+            product_cost[rowindex] = $(this).val() * row_unit_operation_value;
+        }
+        checkQuantity(sta_qty, false);
+
+    });
 
     function checkQuantity(purchase_qty, flag) {
         $('#editModal').modal('hide');
@@ -764,7 +770,7 @@
             var tax = net_unit_cost * quantity * (tax_rate[rowindex] / 100);
             var sub_total = (net_unit_cost * quantity) + tax;
 
-            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_input').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));
@@ -776,7 +782,7 @@
             var tax = (sub_total_unit - net_unit_cost) * quantity;
             var sub_total = sub_total_unit * quantity;
 
-            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_input').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_cost').val(net_unit_cost.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax').text(tax.toFixed({{$general_setting->decimal}}));
             $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed({{$general_setting->decimal}}));
@@ -792,8 +798,9 @@
     }
 
     function calculateAvgUnitCost(newStockQty, newUnitCost) {
-        var oldStockQty = parseInt($('#oldStockQty').val());
-        var oldUnitCost = parseFloat($('#oldUnitCost').val());
+
+        var oldStockQty = parseInt($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('#oldStockQty').val());
+        var oldUnitCost = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('#oldUnitCost').val());
 
         let oldStockTotalCost = oldStockQty * oldUnitCost;
 

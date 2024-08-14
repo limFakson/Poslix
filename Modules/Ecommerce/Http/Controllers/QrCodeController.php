@@ -3,11 +3,13 @@
 namespace Modules\Ecommerce\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
+use App\Models\Warehouse;
 use Session;
 use DB;
 
@@ -22,6 +24,7 @@ class QrCodeController extends Controller {
     }
 
     public function showForm( Request $request ) {
+        $auth_user_warehouse_id = Auth::user()->warehouse_id;
         $size = $request->size? $request->size :250;
         // Example: retrieve from database or set dynamically
         $backgroundColor = $request->backgroundColor?$this->hexToRgb( $request->input( 'backgroundColor' ) ):[ 255, 255, 255 ];
@@ -33,6 +36,13 @@ class QrCodeController extends Controller {
         $style = 'square';
 
         $tables = DB::table( 'tables' )->get();
+        $warehouse = Warehouse::get();
+        if(isset($auth_user_warehouse_id)){
+            $user_warehouse = Warehouse::where('id', $auth_user_warehouse_id)->first();
+            $user_warehouse = $user_warehouse->id;
+        }else{
+            $user_warehouse = 0;
+        }
         // $qrCode = QrCode::size( $size )
         // ->backgroundColor( $backgroundColor[ 0 ], $backgroundColor[ 1 ], $backgroundColor[ 2 ] )
         // ->color( $foregroundColor[ 0 ], $foregroundColor[ 1 ], $foregroundColor[ 2 ] )
@@ -41,7 +51,7 @@ class QrCodeController extends Controller {
         // ->generate( 'https://minhazulmin.github.io/' );
         // return response( $qrCode );
 
-        return view( 'ecommerce::backend.qrcode.generate-qr', compact( 'size', 'backgroundColor', 'foregroundColor', 'margin', 'style', 'tables' ) );
+        return view( 'ecommerce::backend.qrcode.generate-qr', compact( 'size', 'backgroundColor', 'foregroundColor', 'margin', 'style', 'tables', 'warehouse', 'user_warehouse' ) );
     }
 
     public function generate( Request $request ) {
@@ -57,10 +67,11 @@ class QrCodeController extends Controller {
         $style = $request->shape ? 'dot' : 'square';
         $uploadImage = $request->file( 'uploadImage' );
         if($request->data) {
-            $table = DB::table('tables')->where('id', $request->data )->first();
+            $table = DB::table('tables')->where('id', $request->table )->first();
         }
+        $warehouse_id = $request->warehouse;
 
-        $data = 'http://demo.gettlb.com/main';
+        $data = config('app.url').'/main/?warehouse_id='.$warehouse_id;
         // if(){}
         // dd( $request->uploadImage->extension() );
         if ( $request->hasFile( 'uploadImage' ) ) {

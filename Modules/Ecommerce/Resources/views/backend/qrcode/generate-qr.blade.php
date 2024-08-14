@@ -255,21 +255,41 @@
                                                             </div>
 
                                                         </div>
+                                                        <?php
+                                                        $general_settings = \App\Models\GeneralSetting::select('without_stock')->first();
+                                                        ?>
+                                                        @if ($general_settings && $general_settings->without_stock != 'yes')
+                                                            <div class="form-group" id="warehouse_form">
+                                                                <label for="select_table"><b>Select Warehouse *</b></label>
+                                                                <select class="form-control" name="warehouse"
+                                                                    id="select_warehouse" required>
+                                                                    @foreach ($warehouse as $key)
+                                                                        <option value="{{ $key->id }}"
+                                                                            {{ $user_warehouse == $key->id ? 'selected' : '' }}>
+                                                                            {{ $key->name }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        @endif
                                                         <div class="form-group" id="table_form">
                                                             <label for="select_table"><b>Select Table</b></label>
-                                                            <select class="form-control" name="data" id="select_table">
+                                                            <select class="form-control" name="table" id="select_table">
                                                                 <option value="0">Select Table..</option>
-                                                                @foreach ($tables as $key => $table )
-                                                                    <option value={{$table->id}}>{{$table->name}}</option>
+                                                                @foreach ($tables as $key => $table)
+                                                                    <option value={{ $table->id }}>{{ $table->name }}
+                                                                    </option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
                                                         <div class="form-group" id="action_form">
                                                             <label for="select_action"><b>Select Action</b></label>
-                                                            <select class="form-control" id="select_action">
+                                                            <select class="form-control" name="action"
+                                                                id="select_action">
                                                                 <option value="0">Select Table..</option>
-                                                                @foreach ($tables as $key => $table )
-                                                                    <option value="{{$table->id}}">{{$table->name}}</option>
+                                                                @foreach ($tables as $key => $table)
+                                                                    <option value="{{ $table->id }}">{{ $table->name }}
+                                                                    </option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
@@ -280,11 +300,12 @@
                                             <div class="card">
                                                 <div class="card-body">
                                                     <div id="qr-code-container" class="d-flex justify-content-center">
+                                                        <span class="error"></span>
                                                         {{ QrCode::size($size)->backgroundColor($backgroundColor[0], $backgroundColor[1], $backgroundColor[2])->color($foregroundColor[0], $foregroundColor[1], $foregroundColor[2])->margin($margin)->style($style)->generate('http://demo.gettlb.com/main') }}
                                                     </div>
                                                     <div class="slider-container m-auto">
-                                                        <input type="range" name="size" min="1" max="9" value="1"
-                                                            id="range-slider">
+                                                        <input type="range" name="size" min="1"
+                                                            max="9" value="1" id="range-slider">
                                                         <div class="tooltip" id="tooltip">250px</div>
                                                         <div class="d-flex justify-content-between">
                                                             <div><span>250px</span></div>
@@ -311,12 +332,11 @@
         </div>
     </section>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
 @endsection
 
 @push('scripts')
     <script>
-        $("ul#dmsetting").siblings('a').attr('aria-expanded','true');
+        $("ul#dmsetting").siblings('a').attr('aria-expanded', 'true');
         $("ul#dmsetting").addClass("show");
         $("ul#dmsetting #qr-digital-menu").addClass("active");
 
@@ -328,12 +348,12 @@
             document.getElementById('shape-label').innerText = this.checked ? 'Dots' : 'Square';
         });
         $(document).ready(function() {
-            if($('#qr_tabs button.btn-success').attr('id')=='main_qr') {
-                    $('#table_form').addClass('d-none');
-                    $('#action_form').addClass('d-none');
-                } else if($('#qr_tabs button.btn-success').attr('id') == 'table_qr') {
-                    $('#action_form').addClass('d-none');
-                }
+            if ($('#qr_tabs button.btn-success').attr('id') == 'main_qr') {
+                $('#table_form').addClass('d-none');
+                $('#action_form').addClass('d-none');
+            } else if ($('#qr_tabs button.btn-success').attr('id') == 'table_qr') {
+                $('#action_form').addClass('d-none');
+            }
             $('#qr_tabs button').click(function() {
                 $('#qr_tabs button').removeClass('btn-success');
                 $('#qr_tabs button').addClass('btn-light');
@@ -341,13 +361,35 @@
                 $('#action_form').removeClass('d-none');
                 $(this).removeClass('btn-light');
                 $(this).addClass('btn-success');
-                if($(this).attr('id')=='main_qr') {
+                if ($(this).attr('id') == 'main_qr') {
                     $('#table_form').addClass('d-none');
                     $('#action_form').addClass('d-none');
-                } else if($(this).attr('id') == 'table_qr') {
+                } else if ($(this).attr('id') == 'table_qr') {
                     $('#action_form').addClass('d-none');
                 }
+                displayErrorOrQr()
             })
+
+            displayErrorOrQr()
+
+            function displayErrorOrQr() {
+                var tableClass = $('#table_form').attr('class').split(' ')
+                var actionClass = $('#action_form').attr('class').split(' ')
+                var isActiveTable = tableClass.find(element => element == "d-none")
+                var isActiveAction = actionClass.find(element => element == "d-none")
+
+                if (isActiveTable != "d-none") {
+                    let formChanged = false
+                    $('.error').text('You need to select table').css('height', '250px')
+                    $('#qr-code-container svg').hide()
+                    submitForm();
+                } else if (isActiveTable != "d-none") {
+                    let formChanged = false
+                    $('.error').text('You need to select an action').css('height', '250px')
+                    $('#qr-code-container svg').hide()
+                    submitForm();
+                }
+            }
 
             function svgToDataUrl(svgElement) {
                 const serializer = new XMLSerializer();
@@ -384,11 +426,13 @@
 
             $('#qrCodeForm input').on('input change', function() {
                 formChanged = true;
+                displayErrorOrQr()
                 submitForm();
             });
 
             $('#qrCodeForm select').on('change', function() {
                 formChanged = true;
+                displayErrorOrQr()
                 submitForm();
             });
 
@@ -413,14 +457,17 @@
                 // var formData = new FormData(form);
                 // formData.append('uploadImage', $('#uploadImage').prop('files')[0]);
                 $.ajaxSetup({
-                  headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                  }
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
                 });
                 $.ajax({
                     url: "{{ route('generate.qr') }}",
                     method: 'POST',
-                    headers: {"Accept": "application/json",'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
+                    headers: {
+                        "Accept": "application/json",
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
                     data: formData,
                     processData: false,
                     contentType: false,

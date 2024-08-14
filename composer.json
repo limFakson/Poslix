@@ -26,6 +26,7 @@
         "livewire/livewire": "^3.4",
         "maatwebsite/excel": "^3.1.48",
         "milon/barcode": "^10.0",
+        "mpdf/mpdf": "^8.2",
         "nwidart/laravel-modules": "^8.3",
         "paydunya/paydunya": "^1.0",
         "pusher/pusher-php-server": "^7.2",
