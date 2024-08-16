@@ -621,6 +621,7 @@ Route::group(['middleware'=>['web', InitializeTenancyByDomain::class,PreventAcce
                     Route::get('/', 'index')->name('notifications.index');
                     Route::post('store', 'store')->name('notifications.store');
                     Route::get('mark-as-read', 'markAsRead');
+                    Route::get('menu', 'menuNotification')->name('notifications.menu');
                 });
             });
 

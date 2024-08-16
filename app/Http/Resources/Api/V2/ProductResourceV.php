@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Resources\Api;
+namespace App\Http\Resources\Api\V2;
 
 use Illuminate\Http\Request;
 use App\Http\Resources\Api\CategoryResource;
-use App\Http\Resources\Api\ProductVariantCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Api\ExtraCategoryCollection;
+use App\Http\Resources\Api\ProductVariantCollection;
 
-class ProductResource extends JsonResource {
+class ProductResourceV extends JsonResource {
     /**
     * Transform the resource into an array.
     *
@@ -32,7 +33,10 @@ class ProductResource extends JsonResource {
             'taxMethod' =>$this ->tax_method??null,
             'taxName' =>$this ->tax_name??null,
             'taxRate' =>$this ->tax_rate??null,
-            'warehouseQty'=>$this->warehouse_qty??null
+            'warehouseQty'=>$this->warehouse_qty??null,
+            'category' => new CategoryResource( $this->whenLoaded( 'category' ) ),
+            'productVariant' => new ProductVariantCollection( $this->whenLoaded( 'productVariants' ) ),
+            'extraCategory'=>new ExtraCategoryCollection( $this->whenLoaded( 'extraCategories' ) )
         ];
     }
 }

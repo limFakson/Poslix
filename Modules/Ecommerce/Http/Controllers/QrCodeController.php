@@ -66,13 +66,29 @@ class QrCodeController extends Controller {
         // Example: retrieve from database or set dynamically
         $style = $request->shape ? 'dot' : 'square';
         $uploadImage = $request->file( 'uploadImage' );
-        if($request->data) {
-            $table = DB::table('tables')->where('id', $request->table )->first();
-        }
-        $warehouse_id = $request->warehouse;
+        // Initialize base URL
+        $dataUrl = config('app.url') . '/main/';
 
-        $data = config('app.url').'/main/?warehouse_id='.$warehouse_id;
-        // if(){}
+        // Add query parameters based on the availability of warehouse_id and table
+        $queryParams = [];
+        if ($request->warehouse) {
+            $queryParams['warehouse_id'] = $request->warehouse;
+        }
+        if ($request->table) {
+            $table = DB::table('tables')->where('id', $request->table)->first();
+            if ($table) {
+                $queryParams['table'] = $table->id;
+            }
+        }
+
+        // Append query parameters to the base URL
+        if (!empty($queryParams)) {
+            $dataUrl .= '?' . http_build_query($queryParams);
+        }
+
+        // Used the constructed URL
+        $data = $dataUrl;
+
         // dd( $request->uploadImage->extension() );
         if ( $request->hasFile( 'uploadImage' ) ) {
             // $logoPath = $request->file( 'uploadImage' )->store( 'qrlogos', 'public' );

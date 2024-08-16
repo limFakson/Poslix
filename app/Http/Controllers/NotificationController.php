@@ -50,4 +50,9 @@ class NotificationController extends Controller
     {
     	Auth::user()->unreadNotifications->where('data.reminder_date', date('Y-m-d'))->markAsRead();
     }
+
+    public function menuNotification()
+    {
+        return view('backend.notification.menu');
+    }
 }

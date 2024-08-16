@@ -653,6 +653,7 @@ return [
 	"Notification List" => "Notification List",
 	"Document" => "Document",
 	"All Notification" => "All Notification",
+	"Menu Notification" => "Menu Notification",
 	"Read" => "Read",
 	"Unread" => "Unread",
 	"Daily Sale Objective" => "Daily Sale Objective",

@@ -1,187 +1,194 @@
-@extends('backend.layout.main') @section('content')
+@extends('backend.layout.main')
+
+@push('css')
+    <style>
+        .color-picker {
+            width: 100%;
+            height: 34px;
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .main-container {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .custom-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .custom-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 13px;
+            width: 13px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .custom-range-slider {
+            width: 80%;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .custom-range-slider input[type="range"] {
+            -webkit-appearance: none;
+            width: 80%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .custom-range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #000;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .custom-range-slider input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #000;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .range-value {
+            position: absolute;
+            top: -25px;
+            left: 40%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 2px 5px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .slider-container {
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 20px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            height: 5px;
+            border-radius: 5px;
+            outline: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #000;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #000;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        .labels {
+            display: flex;
+            justify-content: between;
+            font-size: 14px;
+        }
+
+        .labels span {
+            display: block;
+            width: 33.33%;
+        }
+    </style>
+@endpush
+
+@section('content')
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible text-center"><button type="button" class="close"
-                data-dismiss="alert" aria-label="Close"><span
-                    aria-hidden="true">&times;</span></button>{{ session()->get('message') }}</div>
-    @endif
-    @if (session()->has('not_permitted'))
-        <div class="alert alert-danger alert-dismissible text-center"><button type="button" class="close" data-dismiss="alert"
-                aria-label="Close"><span aria-hidden="true">&times;</span></button>{{ session()->get('not_permitted') }}
+        <div class="alert alert-success alert-dismissible text-center">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            {{ session()->get('message') }}
         </div>
     @endif
-    @push('css')
-        <style>
-            .color-picker {
-                width: 100%;
-                height: 34px;
-                padding: 6px 12px;
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-                background-color: #fff;
-                cursor: pointer;
-            }
-
-            .main-container {
-                padding: 20px;
-                background-color: #f8f9fa;
-                border-radius: 10px;
-            }
-
-            .custom-toggle {
-                position: relative;
-                display: inline-block;
-                width: 50px;
-                height: 24px;
-            }
-
-            .custom-toggle input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-
-            .slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: #ccc;
-                transition: .4s;
-                border-radius: 24px;
-            }
-
-            .slider:before {
-                position: absolute;
-                content: "";
-                height: 13px;
-                width: 13px;
-                left: 4px;
-                bottom: 4px;
-                background-color: white;
-                transition: .4s;
-                border-radius: 50%;
-            }
-
-            input:checked+.slider {
-                background-color: #2196F3;
-            }
-
-            input:checked+.slider:before {
-                transform: translateX(26px);
-            }
-
-            .custom-range-slider {
-                width: 80%;
-                margin: 10px 0;
-                position: relative;
-            }
-
-            .custom-range-slider input[type="range"] {
-                -webkit-appearance: none;
-                width: 80%;
-                height: 8px;
-                background: #ddd;
-                border-radius: 5px;
-                outline: none;
-            }
-
-            .custom-range-slider input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 20px;
-                height: 20px;
-                background: #000;
-                cursor: pointer;
-                border-radius: 50%;
-            }
-
-            .custom-range-slider input[type="range"]::-moz-range-thumb {
-                width: 20px;
-                height: 20px;
-                background: #000;
-                cursor: pointer;
-                border-radius: 50%;
-            }
-
-            .range-value {
-                position: absolute;
-                top: -25px;
-                left: 40%;
-                transform: translateX(-50%);
-                background: #000;
-                color: #fff;
-                padding: 2px 5px;
-                border-radius: 5px;
-                font-size: 12px;
-                white-space: nowrap;
-            }
-
-            .slider-container {
-                width: 80%;
-                max-width: 600px;
-                text-align: center;
-                position: relative;
-            }
-
-            input[type="range"] {
-                width: 100%;
-                margin: 20px 0;
-                -webkit-appearance: none;
-                appearance: none;
-                background: #ddd;
-                height: 5px;
-                border-radius: 5px;
-                outline: none;
-                position: relative;
-                z-index: 1;
-            }
-
-            input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 20px;
-                height: 20px;
-                background: #000;
-                border-radius: 50%;
-                cursor: pointer;
-            }
-
-            input[type="range"]::-moz-range-thumb {
-                width: 20px;
-                height: 20px;
-                background: #000;
-                border-radius: 50%;
-                cursor: pointer;
-            }
-
-            .tooltip {
-                position: absolute;
-                top: -30px;
-                left: 0;
-                background: #000;
-                color: #fff;
-                padding: 5px 10px;
-                border-radius: 5px;
-                font-size: 12px;
-                transform: translateX(-50%);
-                white-space: nowrap;
-                z-index: 2;
-            }
-
-            .labels {
-                display: flex;
-                justify-content: between;
-                font-size: 14px;
-            }
-
-            .labels span {
-                display: block;
-                width: 33.33%;
-            }
-        </style>
-    @endpush
+    @if (session()->has('not_permitted'))
+        <div class="alert alert-danger alert-dismissible text-center"><button type="button" class="close"
+                data-dismiss="alert" aria-label="Close"><span
+                    aria-hidden="true">&times;</span></button>{{ session()->get('not_permitted') }}
+        </div>
+    @endif
     <section class="forms">
         <div class="container-fluid">
             <div class="row">
@@ -258,7 +265,7 @@
                                                         <?php
                                                         $general_settings = \App\Models\GeneralSetting::select('without_stock')->first();
                                                         ?>
-                                                        @if ($general_settings && $general_settings->without_stock != 'yes')
+                                                        @if ($general_settings && $general_settings->without_stock != 'no')
                                                             <div class="form-group" id="warehouse_form">
                                                                 <label for="select_table"><b>Select Warehouse *</b></label>
                                                                 <select class="form-control" name="warehouse"
@@ -299,8 +306,8 @@
                                         <div class="col-md-6">
                                             <div class="card">
                                                 <div class="card-body">
+                                                    <div class="error"></div>
                                                     <div id="qr-code-container" class="d-flex justify-content-center">
-                                                        <span class="error"></span>
                                                         {{ QrCode::size($size)->backgroundColor($backgroundColor[0], $backgroundColor[1], $backgroundColor[2])->color($foregroundColor[0], $foregroundColor[1], $foregroundColor[2])->margin($margin)->style($style)->generate('http://demo.gettlb.com/main') }}
                                                     </div>
                                                     <div class="slider-container m-auto">
@@ -348,6 +355,7 @@
             document.getElementById('shape-label').innerText = this.checked ? 'Dots' : 'Square';
         });
         $(document).ready(function() {
+            let formChanged = true;
             if ($('#qr_tabs button.btn-success').attr('id') == 'main_qr') {
                 $('#table_form').addClass('d-none');
                 $('#action_form').addClass('d-none');
@@ -373,22 +381,25 @@
             displayErrorOrQr()
 
             function displayErrorOrQr() {
-                var tableClass = $('#table_form').attr('class').split(' ')
-                var actionClass = $('#action_form').attr('class').split(' ')
-                var isActiveTable = tableClass.find(element => element == "d-none")
-                var isActiveAction = actionClass.find(element => element == "d-none")
+                let formChanged = false;
+                var isTableFormHidden = $('#table_form').hasClass('d-none');
+                var isActionFormHidden = $('#action_form').hasClass('d-none');
+                var tableValue = $('#select_table').val();
+                var actionValue = $('#select_action').val()
+                $('.error').text('').css('height', '0');
 
-                if (isActiveTable != "d-none") {
-                    let formChanged = false
-                    $('.error').text('You need to select table').css('height', '250px')
-                    $('#qr-code-container svg').hide()
-                    submitForm();
-                } else if (isActiveTable != "d-none") {
-                    let formChanged = false
-                    $('.error').text('You need to select an action').css('height', '250px')
-                    $('#qr-code-container svg').hide()
+                if (!isTableFormHidden && tableValue <= "0") {
+                    $('.error').text('You need to select table').css('height', '250px');
+                    $('#qr-code-container svg').hide();
+                } else if (!isActionFormHidden && actionValue <= "0") {
+                    $('.error').text('You need to select an action').css('height', '250px');
+                    $('#qr-code-container svg').hide();
+                } else {
+                    $('#qr-code-container svg').show();
+                    let formChanged = true;
                     submitForm();
                 }
+
             }
 
             function svgToDataUrl(svgElement) {
@@ -422,18 +433,17 @@
                 $('#downloadqrButton').attr('href', imageUrl);
             });
 
-            let formChanged = false;
+
 
             $('#qrCodeForm input').on('input change', function() {
                 formChanged = true;
                 displayErrorOrQr()
-                submitForm();
             });
 
             $('#qrCodeForm select').on('change', function() {
+                console.log($('input[name="table"]').text())
                 formChanged = true;
                 displayErrorOrQr()
-                submitForm();
             });
 
             submitForm();
@@ -441,6 +451,7 @@
 
             function submitForm() {
                 if (!formChanged) return;
+                console.log('trigger')
                 formChanged = false;
 
                 // var formData = $('#qrCodeForm').serialize();

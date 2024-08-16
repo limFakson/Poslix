@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\CashRegisterController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\ReturnSaleController;
+use App\Http\Controllers\Api\VariantController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\landlord\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,10 @@ Route::controller(DemoAutoUpdateController::class)->group(function () {
 
 Route::post('auth/login', [LoginController::class, 'Login']);
 Route::apiResource('product', ProductController::class);
+Route::middleware(['tenant.init'])->group(function () {
+    Route::apiResource('variant', VariantController::class);
+    Route::get('menu/product/', [ProductController::class, 'menu_products']);
+});
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);
 Route::apiResource('category', CategoryController::class);
@@ -60,7 +65,6 @@ Route::apiResource('return-sale', ReturnSaleController::class);
 Route::get('tenant', [UserController::class, 'tenant']);
 Route::get('tenant/user/{id}', [UserController::class, 'tenantuser']);
 Route::get('product/bycategory/{category_id}', [ProductController::class, 'showByCategoryId']);
-Route::get('menu/product/', [ProductController::class, 'menu_products']);
 Route::get('customer/byuser/{user_id}', [CustomerController::class, 'showByUserId']);
 Route::delete('sale/product-sale/{id}', [SaleController::class, 'destroyProductSale']);
 

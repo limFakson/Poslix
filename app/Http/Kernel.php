@@ -76,6 +76,7 @@ class Kernel extends HttpKernel
         'common' => \App\Http\Middleware\Common::class,
         'superadminauth' => \App\Http\Middleware\SuperAdminAuth::class,
         'cors' => \App\Http\Middleware\Cors::class,
+        'tenant.init' => \App\Http\Middleware\InitializeTenancyByQueryParameter::class,
         // 'tenant.identification' => \App\Http\Middleware\TenantIdentification::class,
     ];
 
