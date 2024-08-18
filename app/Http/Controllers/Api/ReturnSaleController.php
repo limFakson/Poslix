@@ -413,27 +413,27 @@ class ReturnSaleController extends Controller
                 }
 
                 $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                ->where('warehouse_id', $returnData['warehouseId'])
+                ->where('warehouse_id', $return->warehouse_id)
                 ->where('product_id', $data['productId'])
                 ->where('variant_id', $data['varientId'])
                 ->first();
 
                 if ($productWarehouse) {
                     DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $returnData['warehouseId'])
+                        ->where('warehouse_id', $return->warehouse_id)
                         ->where('product_id', $data['productId'])
                         ->where('variant_id', $data['varientId'])
                         ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
                 }
             } else {
                 $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                    ->where('warehouse_id', $returnData['warehouseId'])
+                    ->where('warehouse_id', $return->warehouse_id)
                     ->where('product_id', $data['productId'])
                     ->first();
 
                 if ($productWarehouse) {
                     DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $returnData['warehouseId'])
+                        ->where('warehouse_id', $return->warehouse_id)
                         ->where('product_id', $data['productId'])
                         ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
                 }
@@ -441,7 +441,7 @@ class ReturnSaleController extends Controller
         }
 
         DB::connection('tenant')->table('returns')->where('id', $id)->update($updateData);
-        DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])->update(['sale_status'=> 4]);
+        DB::connection('tenant')->table('sales')->where('id', $return->sale_id)->update(['sale_status'=> 4]);
 
         // Step 5: Return updated sale and product sale information
         $return = DB::connection('tenant')->table('returns')
@@ -455,8 +455,8 @@ class ReturnSaleController extends Controller
         $productSaleResources = new ProductReturnsCollection($product_returns);
 
         return response()->json([
-            'sale' => $saleResources,
-            'product_sale' => $productSaleResources
+            'return_sale' => $saleResources,
+            'product_return' => $productSaleResources
         ], 201);
     }
 

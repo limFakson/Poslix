@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DemoAutoUpdateController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\V2\SecondProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CategoryController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\ReturnSaleController;
 use App\Http\Controllers\Api\VariantController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\landlord\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +47,7 @@ Route::post('auth/login', [LoginController::class, 'Login']);
 Route::apiResource('product', ProductController::class);
 Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('variant', VariantController::class);
+    Route::apiResource('notification', NotificationController::class);
     Route::get('menu/product/', [ProductController::class, 'menu_products']);
 });
 Route::apiResource('sale', SaleController::class);

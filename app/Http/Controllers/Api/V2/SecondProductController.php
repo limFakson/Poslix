@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V2;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -16,7 +16,7 @@ use App\Http\Resources\Api\ProductCollection;
 use App\Http\Resources\Api\V2\ProductCollectionV;
 use Illuminate\Http\Request;
 
-class ProductController extends Controller {
+class SecondProductController extends Controller {
     //
 
     public function index( Request $request ) {
@@ -228,128 +228,60 @@ class ProductController extends Controller {
 
     public function menu_products( Request $request ) {
 
-        // $subdomain = $request->input( 'subdomain' );
-        $warehouseId = $request->input( 'warehouse_id' );
-        // if ( $subdomain ) {
-        //     $subdomain_data = Domain::where( 'domain', $subdomain )->first();
-        //     if ( !$subdomain_data ) {
-        //         return response( [ 'message'=>'Domain not found' ], 404 );
-        //     }
-        //     $tenantId = $subdomain_data->tenant_id;
-        // } else {
-        //     $tenantId = $request->input( 'tenant_id' );
-        // }
+        if ( GeneralSetting::first( 'without_stock' )->without_stock != 'no' ) {
+            $warehouse_id = $request->input( 'warehouse_id' );
 
-        // $tenant = Tenant::find( $tenantId );
-        // if ( !$tenant ) {
-        //     return response()->json( [ 'message'=> 'Tenant not found' ], 404 );
-        // }
-
-        // // Connected to the tenant database
-        // $tenancyDb = $tenant->tenancy_db_name;
-
-        // config( [ 'database.connections.tenant' => [
-        //     'driver' => 'mysql',
-        //     'host' => 'localhost',
-        //     'database' => $tenancyDb,
-        //     'username' => config( 'app.db_username' ),
-        //     'password' => config( 'app.db_password' ),
-        // ] ] );
-        // DB::purge( 'tenant' );
-        // DB::reconnect( 'tenant' );
-        if ( GeneralSetting::first( 'without_stock' )->without_stock != 'yes' ) {
-
-            if ( !$warehouseId ) {
-                return response( [ 'message'=>'Warehouse id needed' ], 400 );
+            if ( !$warehouse_id ) {
+                return response()->json( [ 'error' => 'Warehouse ID is required' ], 400 );
             }
-
-            $warehouse = Warehouse::where( 'id', $warehouseId )->first();
+            $warehouse = Warehouse::where( 'id', $warehouse_id )->first();
             if ( !$warehouse ) {
                 return response( [ 'message'=>'Warehosue not found' ], 404 );
             }
 
-            $products = DB::connection( 'tenant' )->table( 'products' )
-            ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
-            ->leftjoin( 'product_warehouse', 'products.id', '=', 'product_warehouse.product_id' )
-            ->select(
-                'products.*',
-                'taxes.name as tax_name',
-                'taxes.rate as tax_rate',
-                'taxes.is_active as tax_is_active',
-                'product_warehouse.warehouse_id as warehouse_id',
-                'product_warehouse.qty as warehouse_qty'
-            )
-            ->where( 'warehouse_id', $warehouseId )
-            ->where( 'products.is_active', true )
-            ->where( 'products.is_online', true )
-            ->get();
-            $product_varients = DB::connection( 'tenant' )->table( 'product_variants' )->get();
-            $extra = DB::connection( 'tenant' )->table( 'extras' )->get();
+            // Fetch all products with their relationships
+            $products = Product::with( 'category', 'productVariants', 'extraCategories' )->get();
 
-            $productResources = ProductResource::Collection( $products );
-            return response()->json( [
-                'products'=>$productResources,
-                'varient'=>$product_varients,
-                'extra'=>$extra
-            ] );
+            foreach ( $products as $product ) {
+                $quantity = 0;
 
-        } else {
+                if ( $product->is_variant ) {
+                    $product_warehouse = Product_Warehouse::select( DB::raw( 'SUM(qty) as qty' ) )
+                    ->where( [
+                        [ 'product_id', '=', $product->id ],
+                        [ 'warehouse_id', '=', $warehouse_id ]
+                    ] )
+                    ->groupBy( 'product_id' )
+                    ->first();
 
-            $subdomain = $request->input( 'subdomain' );
-            $warehouseId = $request->input( 'warehouse_id' );
-            if ( $subdomain ) {
-                $subdomain_data = Domain::where( 'domain', $subdomain )->first();
-                if ( !$subdomain_data ) {
-                    return response( [ 'message'=>'Domain not found' ], 404 );
+                    $quantity = $product_warehouse ? $product_warehouse->qty : 0;
+                } else {
+                    $product_warehouse = Product_Warehouse::where( [
+                        [ 'product_id', '=', $product->id ],
+                        [ 'warehouse_id', '=', $warehouse_id ]
+                    ] )->first();
+
+                    $quantity = $product_warehouse ? $product_warehouse->qty : 0;
                 }
-                $tenantId = $subdomain_data->tenant_id;
-            } else {
-                $tenantId = $request->input( 'tenant_id' );
+
+                // Add warehouse_qty to each product
+                $product->warehouse_qty = $quantity;
             }
 
-            if ( !$warehouseId ) {
-                return response( [ 'message'=>'Warehouse id needed' ], 500 );
-            }
-
-            $tenant = Tenant::find( $tenantId );
-            if ( !$tenant ) {
-                return response()->json( [ 'message'=> 'Tenant not found' ], 404 );
-            }
-            // Connected to the tenant database
-            $tenancyDb = $tenant->tenancy_db_name;
-
-            config( [ 'database.connections.tenant' => [
-                'driver' => 'mysql',
-                'host' => 'localhost',
-                'database' => $tenancyDb,
-                'username' => config( 'app.db_username' ),
-                'password' => config( 'app.db_password' ),
-            ] ] );
-            DB::purge( 'tenant' );
-            DB::reconnect( 'tenant' );
-
-            $products = DB::connection( 'tenant' )->table( 'products' )
-            ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
-            ->select(
-                'products.*',
-                'taxes.name as tax_name',
-                'taxes.rate as tax_rate',
-                'taxes.is_active as tax_is_active'
-            )
-            ->where( 'products.is_active', true )
-            ->where( 'products.is_online', true )
+            return response()->json( new ProductCollectionV( $products )
+        );
+        } else {
+            // If 'without_stock' is 'yes', fetch products with their relationships
+            $products = Product::where( [
+                [ 'is_active', '=', true ],
+                [ 'is_online', '=', true ]
+            ] )
+            ->with( 'category', 'productVariants', 'extraCategories' )
             ->get();
-            $product_varients = DB::connection( 'tenant' )->table( 'product_variants' )->get();
-            $extra = DB::connection( 'tenant' )->table( 'extras' )->get();
 
-            $productResources = ProductResource::Collection( $products );
-            return response()->json( [
-                'products'=>$productResources,
-                'varient'=>$product_varients,
-                'extra'=>$extra
-            ] );
-
+            return response()->json($products);
         }
+
     }
 
     public function update( Request $request, $product ) {

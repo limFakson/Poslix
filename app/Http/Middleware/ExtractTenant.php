@@ -13,7 +13,7 @@ class ExtractTenant {
         $subdomain = explode( '.', $host )[ 0 ];
         $domain = env( 'APP_URL' );
 
-        if ( $subdomain !== explode( '.', $domain )[ 0 ] ) {
+        if ( $subdomain != explode( '.', $domain )[ 0 ] ) {
             $tenant = tenancy()->tenant;
 
             if ( !$tenant ) {

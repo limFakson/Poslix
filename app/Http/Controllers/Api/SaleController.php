@@ -426,8 +426,8 @@ class SaleController extends Controller
                         'net_unit_price' => $data['netUnitPrice'] ?? $existingProductSale->net_unit_price,
                         'discount' => $data['discount'] ?? $existingProductSale->discount,
                         'tax_rate' => $data['taxRate'] ?? $existingProductSale->tax_rate,
-                        'extras' => is_array($data['extras']) ? json_encode($data['extras']) : $data['extras'] ?? $existingProductSale->extras,
-                        'extra_names' => is_array($data['extraNames']) ? json_encode($data['extraNames']) : $data['extraNames'] ?? $existingProductSale->extra_names,
+                        'extras' => isset($data['extras']) ? (is_array($data['extras']) ? json_encode($data['extras']) : $data['extras']) : $existingProductSale->extras,
+                        'extra_names' => isset($data['extraNames']) ? (is_array($data['extraNames']) ? json_encode($data['extraNames']) : $data['extraNames']) : $existingProductSale->extra_names,
                         'extra' => $data['extra'] ?? $existingProductSale->extra,
                         'tax' => $data['tax'] ?? $existingProductSale->tax,
                         'total' => $data['total'] ?? $existingProductSale->total,
@@ -491,27 +491,27 @@ class SaleController extends Controller
                 }
 
                 $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                ->where('warehouse_id', $saleData['warehouseId'])
+                ->where('warehouse_id', $sale->warehouse_id)
                 ->where('product_id', $data['productId'])
                 ->where('variant_id', $data['variantId'])
                 ->first();
 
                 if ($productWarehouse) {
                     DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $saleData['warehouseId'])
+                        ->where('warehouse_id', $sale->warehouse_id)
                         ->where('product_id', $data['productId'])
                         ->where('variant_id', $data['variantId'])
                         ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
                 }
             } else {
                 $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                    ->where('warehouse_id', $saleData['warehouseId'])
+                    ->where('warehouse_id', $sale->warehouse_id)
                     ->where('product_id', $data['productId'])
                     ->first();
 
                 if ($productWarehouse) {
                     DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $saleData['warehouseId'])
+                        ->where('warehouse_id', $sale->warehouse_id)
                         ->where('product_id', $data['productId'])
                         ->update(['qty' => $productWarehouse->qty - $quantityDifference]);
                 }
