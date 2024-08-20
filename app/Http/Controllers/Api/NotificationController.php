@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Resources\Api\NotificationCollection;
 use App\Http\Resources\Api\NotificationResource;
+use App\Http\Requests\StoreNotificationRequest;
 use Illuminate\Support\Facades\Config;
 use App\Http\Controllers\Controller;
 use App\Models\MenuNotification;
@@ -20,7 +21,7 @@ class NotificationController extends Controller {
         return response()->json( new NotificationCollection( $notification ) );
     }
 
-    public function store( Request $request ) {
+    public function store( StoreNotificationRequest $request ) {
         $tenantId = $request->input( 'tenant_id' );
         Config::set( 'tenant_id', $tenantId );
         $data = $request->all();
@@ -46,10 +47,10 @@ class NotificationController extends Controller {
 
         $responce = MenuNotification::create( $notify_data );
 
-        return response()->json( new NotificationResource( $responce ) );
+        return response()->json( new NotificationResource( $responce ), 202 );
     }
 
-    public function update( Request $request, $notiId ) {
+    public function update( StoreNotificationRequest $request, $notiId ) {
         $tenantId = $request->input( 'tenant_id' );
         Config::set( 'tenant_id', $tenantId );
         $data = $request->all();

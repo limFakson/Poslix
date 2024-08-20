@@ -22,7 +22,7 @@ class StoreCustomerRequest extends BaseFormRequest {
     public function rules(): array {
         return [
             'customerGroupId' => 'required',
-            'userId' => 'requireed',
+            'userId' => 'nullable',
             'name' => 'required|string|max:255',
             'companyName' => 'nullable|string|max:255',
             'email' => 'required|string|max:255',

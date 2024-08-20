@@ -36,8 +36,10 @@ class CustomerController extends Controller
         DB::reconnect('tenant');
 
         $customers = DB::connection('tenant')->table('customers')
+        ->where('is_active', true)
         ->get();
         $customer_group = DB::connection('tenant')->table('customer_groups')
+        ->where('is_active', true)
         ->get();
 
         $customerResources = new CustomerCollection($customers);
@@ -75,22 +77,25 @@ class CustomerController extends Controller
         $customerData = $request->validated();
         $now = \Carbon\Carbon::now()->toDateTimeString();
 
-        foreach($customer_datas as $customer_data){
-            if(strtolower($customer_data->name) == strtolower($customerData['name']) && strtolower($customer_data->email) == strtolower($customerData['email'])){
-                $customerResoources = new CustomerResource($customer_data);
-                return Response()->json(['customer'=>$customerResoources]);
-            }elseif(strtolower($customer_data->name) == strtolower($customerData['name']) && $customer_data->phone_number == $customerData['phoneNumber']){
-                $customerResoources = new CustomerResource($customer_data);
-                return Response()->json(['customer'=>$customerResoources]);
-            };
-        };
+        // Check for existing customer
+        $existingCustomer = DB::connection('tenant')->table('customers')
+            ->where(function($query) use ($customerData) {
+                $query->where('name', '=', strtolower($customerData['name']))
+                    ->where('email', '=', strtolower($customerData['email']));
+            })
+            ->orWhere(function($query) use ($customerData) {
+                $query->where('name', '=', strtolower($customerData['name']))
+                    ->where('phone_number', '=', $customerData['phoneNumber']);
+            })
+            ->first();
 
-        if(isset($customerData["userId"])){
-            $user_id = $customerData["userId"];
-        }else{
-            $user_id = DB::connection('tenant')->table('users')->where('name', "Guest")->get();
-            dd($user_id);
+        if ($existingCustomer) {
+            $customerResources = new CustomerResource($existingCustomer);
+            return response()->json($customerResources, 200);
         }
+
+        // Handle user creation if not provided
+        $user_id = $customerData['userId'] ?? $this->getOrCreateGuestUser($tenantId);
 
         //Find the highest id in the table
         $highestId = DB::connection('tenant')->table('customers')->max('id');
@@ -113,7 +118,7 @@ class CustomerController extends Controller
             'deposit' => $customerData['deposit']?? null,
             'expense' => $customerData['expence']?? null,
             'wishlist' => $customerData['wishlist']?? null,
-            'is_active' => Null,
+            'is_active' => $customerData['isActive'],
             'created_at'=>$now,
             'updated_at' => $now
         ];
@@ -123,7 +128,7 @@ class CustomerController extends Controller
         $creatData = DB::connection('tenant')->table('customers')->find($newid);
 
         $customerResoources = new CustomerResource($creatData);
-        return response()->json(["customer"=>$customerResoources], 201);
+        return response()->json($customerResoources, 201);
     }
 
     public function show(Request $request, $id)
@@ -244,6 +249,46 @@ class CustomerController extends Controller
         return response()->json($updateData, 200);
     }
 
+    public function getOrCreateGuestUser($tenantId)
+    {
+        $tenant = Tenant::find($tenantId);
+        if (!$tenant) {
+            return response()->json(["message" => "Tenant not found"], 400);
+        }
+
+        // Connect to the tenant's database
+        $tenancyDb = $tenant->tenancy_db_name;
+
+        config(['database.connections.tenant' => [
+            'driver' => 'mysql',
+            'host' => 'localhost',
+            'database' => $tenancyDb,
+            'username' => config('app.db_username'),
+            'password' => config('app.db_password'),
+        ]]);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+
+        // Check if a guest user exists
+        $guest = DB::connection('tenant')->table('users')->where('name', 'Guest')->first();
+
+        // If guest user doesn't exist, create one
+        if (!$guest) {
+            $guestId = DB::connection('tenant')->table('users')->insertGetId([
+                'name' => 'Guest',
+                'email' => 'guest@example.com',
+                'password' => \Illuminate\Support\Facades\Hash::make('guest_password'),
+                'phone' => '12345678',
+                'role_id' => 5,
+            ]);
+
+            // Retrieve the newly created guest user
+            $guest = DB::connection('tenant')->table('users')->find($guestId);
+        }
+        $guest = $guest->id;
+
+        return $guest;
+    }
 
     public function destroy($customer)
     {

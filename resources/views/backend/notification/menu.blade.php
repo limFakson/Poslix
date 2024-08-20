@@ -94,6 +94,7 @@
         }
     </style>
 
+    {{-- An unneccessary update, not using it for now --}}
     <section>
         <div class="cards">
             <div class="notification">
