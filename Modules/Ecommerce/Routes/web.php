@@ -22,6 +22,7 @@
     use Modules\Ecommerce\Http\Controllers\OrderController;
 	use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 	use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+    use Illuminate\Support\Facades\File;
 	Route::get('site-maintenance-on',function() {
 		Artisan::call('down --dashboard');
 		return redirect()->back();
@@ -48,7 +49,11 @@
     			Route::get('/delete/{id}', [SliderController::class, 'slidersDelete'])->name('slidersDelete');
     		});
 
-    		// Page
+
+    // Route::get('/{any}', function () {
+    //     return File::get(public_path('web/index.html'));
+    // })->where('any', '.*');
+            // Page
     		Route::prefix('pages')->group(function () {
     			Route::get('/', [PageController::class, 'index'])->name('page.index');
     			Route::get('/create', [PageController::class, 'create'])->name('page.create');

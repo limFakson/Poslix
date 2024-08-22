@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>App Upload</title>
     <style>
-        body{
+        body {
             background-color: #f7f7f7;
             width: 100%;
             height: 100%;
             color: #5e5873;
-            direction: rtl;
-            text-align: right;
         }
-        main{
+
+        main {
             margin: 3rem;
             padding: 3rem;
         }
-        form{
+
+        form {
             padding-bottom: 3rem;
         }
-        input[type=text]{
+
+        input[type=text] {
             height: 2.3rem;
             width: 17rem;
             padding: 4px 0;
@@ -30,7 +32,8 @@
             border: solid 2px #32918a;
             outline: none;
         }
-        button{
+
+        button {
             background-color: #32918a;
             border: 1px solid #5e5873;
             color: #fff;
@@ -40,16 +43,18 @@
             font-size: 15px;
             font-weight: 500;
         }
-        .link{
+
+        .link {
             text-decoration: underline;
             font-size: 18px;
             font-weight: 500;
         }
     </style>
 </head>
+
 <body>
     <main>
-        <form action="{{url('/upload')}}" method="post" enctype="multipart/form-data">
+        <form action="{{ url('/upload') }}" method="post" enctype="multipart/form-data">
             @csrf
             <input type="text" placeholder="version" name="version" required> <br> <br>
             <input type="text" placeholder="build num" name="build" required> <br> <br>
@@ -66,4 +71,5 @@
         @endif
     </main>
 </body>
+
 </html>

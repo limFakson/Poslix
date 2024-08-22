@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
+use Illuminate\Support\Facades\File;
 use App\Http\Controllers\AccountsController;
 use App\Http\Controllers\AddonInstallController;
 use App\Http\Controllers\AdjustmentController;
@@ -93,6 +94,11 @@ Route::group(['middleware'=>['web', InitializeTenancyByDomain::class,PreventAcce
             cache()->forget('role_has_permissions_list');
             dd('cleared');
         });
+
+
+        Route::get('/{any}', function () {
+            return File::get(public_path('web/index.html'));
+        })->where('any', '.*');
 
         Route::get('update-coupon', [CouponController::class, 'updateCoupon']);
 

@@ -80,12 +80,7 @@ class CustomerController extends Controller
         // Check for existing customer
         $existingCustomer = DB::connection('tenant')->table('customers')
             ->where(function($query) use ($customerData) {
-                $query->where('name', '=', strtolower($customerData['name']))
-                    ->where('email', '=', strtolower($customerData['email']));
-            })
-            ->orWhere(function($query) use ($customerData) {
-                $query->where('name', '=', strtolower($customerData['name']))
-                    ->where('phone_number', '=', $customerData['phoneNumber']);
+                $query->where('name', '=', strtolower($customerData['name']));
             })
             ->first();
 
@@ -103,10 +98,10 @@ class CustomerController extends Controller
         $createData = [
             'id'=>$newid,
             'name' => $customerData['name'],
-            'email' => $customerData['email'],
+            'email' => $customerData['email']??null,
             'user_id' => $user_id,
             'company_name' => $customerData['companyName']?? null,
-            'phone_number' => $customerData['phoneNumber'],
+            'phone_number' => $customerData['phoneNumber']??null,
             'city' => $customerData['city']?? null,
             'tax_no' => $customerData['taxNo']?? null,
             'address' => $customerData['address']?? null,

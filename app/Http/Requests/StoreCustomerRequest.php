@@ -25,7 +25,7 @@ class StoreCustomerRequest extends BaseFormRequest {
             'userId' => 'nullable',
             'name' => 'required|string|max:255',
             'companyName' => 'nullable|string|max:255',
-            'email' => 'required|string|max:255',
+            'email' => 'nullable|string|max:255',
             'phoneNumber' => 'nullable|max:20',
             'taxNo' => 'nullable|max:40',
             'address' => 'nullable|string|max:255',
