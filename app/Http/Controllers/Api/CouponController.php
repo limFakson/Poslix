@@ -31,7 +31,7 @@ class CouponController extends Controller {
         }
         $coupon_code = $data[ 'code' ];
 
-        $coupon_details = Coupon::where( 'code', $coupon_code )->first();
+        $coupon_details = Coupon::where( [ [ 'code', $coupon_code ], [ 'is_active', true ] ] )->first();
 
         if ( !$coupon_details ) {
             return response()->json( [ 'error'=>'Coupon not found' ], 404 );

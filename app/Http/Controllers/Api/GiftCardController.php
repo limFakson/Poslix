@@ -2,71 +2,40 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\GiftCard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\landlord\Tenant;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\GiftCardResource;
 use App\Http\Resources\Api\GiftCardCollection;
 
-class GiftCardController extends Controller
-{
+class GiftCardController extends Controller {
     //
-    public function index(Request $request)
-    {
-        $tenantId = $request->input('tenant_id');
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant){
-            return response()->json(["message"=> "Tenant not found"], 400);
-        }
-        // Connected to the tenant database
-        $tenancyDb = $tenant->tenancy_db_name;
 
-        config(['database.connections.tenant' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => $tenancyDb,
-            'username' => config('app.db_username'),
-            'password' => config('app.db_password'),
-        ]]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
-
-        $card = DB::connection('tenant')->table('gift_cards')
-        ->get();
-        dd($card);
-
-        return new GiftCardCollection($card);
+    public function index( Request $request ) {
     }
 
-    public function show(Request $request, $id)
-    {
-        $tenantId = $request->input('tenant_id');
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant){
-            return response()->json(["message"=> "Tenant not found"], 400);
+    public function show( Request $request, $id ) {
+    }
+
+    public function store( Request $request ) {
+        $data = $request->all();
+
+        if ( !isset( $data[ 'cardNo' ] ) ) {
+            return response()->json( [
+                'error' => [
+                    'cardNo' => [ 'Card Number field is required' ]
+                ]
+            ], 400 );
         }
-        // Connected to the tenant database
-        $tenancyDb = $tenant->tenancy_db_name;
+        $giftcard_num = $data[ 'cardNo' ];
 
-        config(['database.connections.tenant' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => $tenancyDb,
-            'username' => config('app.db_username'),
-            'password' => config('app.db_password'),
-        ]]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
+        $giftcard_details = GiftCard::where( [ [ 'card_no', $giftcard_num ], [ 'is_active', true ] ] )->first();
 
-        $card = DB::connection('tenant')->table('gift_cards')
-        ->with('customer')
-        ->find($id);
-
-        if (!$card) {
-            return response()->json(['error' => 'Giftcard not found'], 404);
+        if ( !$giftcard_details ) {
+            return response()->json( [ 'error'=>'Gift Card not found' ], 404 );
         }
 
-        return new GiftCardResource($card);
+        return response()->json( new GiftCardResource( $giftcard_details ), 200 );
     }
 }

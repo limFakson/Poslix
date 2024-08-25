@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api\V2;
 
-use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\GeneralSetting;
 use App\Models\Warehouse;
+use App\Models\GeneralSetting;
+use App\Models\landlord\Domain;
+use App\Models\landlord\Tenant;
 use App\Models\Product_Warehouse;
 use Illuminate\Support\Facades\DB;
-use App\Models\landlord\Tenant;
-use App\Models\landlord\Domain;
+use Illuminate\Support\Collection;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\ProductResource;
-use App\Http\Resources\Api\V2\ProductResourceV;
 use App\Http\Resources\Api\ProductCollection;
+use App\Http\Resources\Api\V2\ProductResourceV;
 use App\Http\Resources\Api\V2\ProductCollectionV;
 use Illuminate\Http\Request;
 
@@ -228,7 +229,7 @@ class SecondProductController extends Controller {
 
     public function menu_products( Request $request ) {
 
-        if ( GeneralSetting::first( 'without_stock' )->without_stock != 'no' ) {
+        if ( GeneralSetting::first( 'without_stock' )->without_stock != 'yes' ) {
             $warehouse_id = $request->input( 'warehouse_id' );
 
             if ( !$warehouse_id ) {
@@ -239,37 +240,46 @@ class SecondProductController extends Controller {
                 return response( [ 'message'=>'Warehosue not found' ], 404 );
             }
 
-            // Fetch all products with their relationships
-            $products = Product::with( 'category', 'productVariants', 'extraCategories' )->get();
+            $allProducts = collect();
 
-            foreach ( $products as $product ) {
-                $quantity = 0;
+            Product::where('is_active', true)
+            ->where('is_online', true)
+            ->orderBy('id')
+            ->chunk(1000, function ($products) use ($warehouse_id, &$allProducts) {
+                // Eager load the relationships for the current chunk
+                $products->load(['category', 'productVariants', 'extraCategories']);
 
-                if ( $product->is_variant ) {
-                    $product_warehouse = Product_Warehouse::select( DB::raw( 'SUM(qty) as qty' ) )
-                    ->where( [
-                        [ 'product_id', '=', $product->id ],
-                        [ 'warehouse_id', '=', $warehouse_id ]
-                    ] )
-                    ->groupBy( 'product_id' )
-                    ->first();
+                foreach ($products as $product) {
+                    $quantity = 0;
 
-                    $quantity = $product_warehouse ? $product_warehouse->qty : 0;
-                } else {
-                    $product_warehouse = Product_Warehouse::where( [
-                        [ 'product_id', '=', $product->id ],
-                        [ 'warehouse_id', '=', $warehouse_id ]
-                    ] )->first();
+                    if ($product->is_variant) {
+                        $productWarehouse = Product_Warehouse::select(DB::raw('SUM(qty) as qty'))
+                            ->where([
+                                ['product_id', '=', $product->id],
+                                ['warehouse_id', '=', $warehouse_id]
+                            ])
+                            ->groupBy('product_id')
+                            ->first();
 
-                    $quantity = $product_warehouse ? $product_warehouse->qty : 0;
+                        $quantity = $productWarehouse ? $productWarehouse->qty : 0;
+                    } else {
+                        $productWarehouse = Product_Warehouse::where([
+                            ['product_id', '=', $product->id],
+                            ['warehouse_id', '=', $warehouse_id]
+                        ])->first();
+
+                        $quantity = $productWarehouse ? $productWarehouse->qty : 0;
+                    }
+
+                    // Add warehouse_qty to each product
+                    $product->warehouse_qty = $quantity;
                 }
 
-                // Add warehouse_qty to each product
-                $product->warehouse_qty = $quantity;
-            }
+                // Merge this chunk with the main collection
+                $allProducts = $allProducts->merge($products);
+            });
 
-            return response()->json( new ProductCollectionV( $products )
-        );
+            return response()->json(new ProductCollectionV($allProducts));
         } else {
             // If 'without_stock' is 'yes', fetch products with their relationships
             $products = Product::where( [
@@ -279,7 +289,7 @@ class SecondProductController extends Controller {
             ->with( 'category', 'productVariants', 'extraCategories' )
             ->get();
 
-            return response()->json($products);
+            return response()->json(new ProductCollectionV($products));
         }
 
     }

@@ -49,8 +49,9 @@ Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('variant', VariantController::class);
     Route::apiResource('notification', NotificationController::class);
     Route::apiResource('action-button', ButtonController::class);
-    Route::get('menu/product/', [ProductController::class, 'menu_products']);
+    Route::get('menu/product/', [SecondProductController::class, 'menu_products']);
     Route::apiResource('coupon', CouponController::class);
+    Route::apiResource('giftcard', GiftCardController::class);
 });
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);
@@ -60,7 +61,6 @@ Route::apiResource('', ApiOverviewController::class);
 Route::apiResource('biller', BillerController::class);
 Route::apiResource('warehouse', WarehouseController::class);
 Route::apiResource('pos-setting', PosSettingsController::class);
-Route::apiResource('giftcard', GiftCardController::class);
 Route::apiResource('cashregister', CashRegisterController::class);
 Route::apiResource('table', TableController::class);
 Route::apiResource('gensettings', GenSettingsController::class);

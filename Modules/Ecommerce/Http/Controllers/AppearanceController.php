@@ -23,12 +23,12 @@ class AppearanceController extends Controller {
     //Design
 
     public function design( Request $request ) {
-        $appearance = Appearance::where('user_id', Auth::user()->id )->first();
-        return view( 'ecommerce::backend.appearance.design', ['appearance'=> $appearance ] );
+        $appearance = Appearance::where( 'user_id', Auth::user()->id )->first();
+        return view( 'ecommerce::backend.appearance.design', [ 'appearance'=> $appearance ] );
     }
 
     public function designpost( Request $request ) {
-        $appearance = Appearance::updateOrCreate(['user_id' => Auth::user()->id], ['color' => $request->color ] );
+        $appearance = Appearance::updateOrCreate( [ 'user_id' => Auth::user()->id ], [ 'color' => $request->color ] );
         $request->validate( [
             'logoImage' => 'mimes:jpg,jpeg,png|max:2048',
         ] );
@@ -43,47 +43,22 @@ class AppearanceController extends Controller {
     }
 
     //Menu
+
     public function menu( Request $request ) {
-        $appearance = Appearance::where('user_id', Auth::user()->id )->first();
-        return view( 'ecommerce::backend.appearance.menu', ['appearance'=> $appearance ] );
+        $appearance = Appearance::where( 'user_id', Auth::user()->id )->first();
+        return view( 'ecommerce::backend.appearance.menu', [ 'appearance'=> $appearance ] );
     }
 
     public function menupost( Request $request ) {
-        $appearance = Appearance::updateOrCreate(['user_id' => Auth::user()->id], ['menu_option' => $request->enable_horizontal == true ? 'horizontal' : 'vertical' ] );
+        $appearance = Appearance::updateOrCreate( [ 'user_id' => Auth::user()->id ], [ 'menu_option' => $request->enable_horizontal == true ? 'horizontal' : 'vertical' ] );
         $appearance->save();
         return back()->with( 'message', 'Saved successfully' );
     }
 
-    public function appearanceapi(Request $request){
-        $userId = $request->input('user_id');
-        $tenantId = $request->input('tenant_id');
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant){
-            return response()->json(["message"=> "Tenant not found"], 404);
-        } else if(!$userId){
-            return response()->json(["message"=> "User id is needed to be passed as (user_id)"], 404);
-        };
-
-        // Connected to the tenant database
-        $tenancyDb = $tenant->tenancy_db_name;
-
-        config(['database.connections.tenant' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => $tenancyDb,
-            'username' => config('app.db_username'),
-            'password' => config('app.db_password'),
-        ]]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
-        $userid = DB::connection('tenant')->table('users')->where('id', $userId)->first();
-        if (!$userid){
-            return response()->json(["message"=> "User not found"], 404);
-        }
-
-        $appearance = DB::connection('tenant')->table('appearances')->where('user_id', $userId )->first();
-        return response([$appearance]);
-    }
+    // public function appearanceApi( Request $request ) {
+    //     $appearance = Appearance::first();
+    //     return response( [ $appearance ] );
+    // }
 
     /**
     * Show the form for creating a new resource.
