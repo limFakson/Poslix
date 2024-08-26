@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DemoAutoUpdateController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductWarehouseController;
 use App\Http\Controllers\Api\V2\SecondProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\CustomerController;
@@ -49,9 +50,10 @@ Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('variant', VariantController::class);
     Route::apiResource('notification', NotificationController::class);
     Route::apiResource('action-button', ButtonController::class);
-    Route::get('menu/product/', [SecondProductController::class, 'menu_products']);
+    Route::get('menu/product', [SecondProductController::class, 'menu_products']);
     Route::apiResource('coupon', CouponController::class);
     Route::apiResource('giftcard', GiftCardController::class);
+    Route::apiResource('warehouse/product', ProductWarehouseController::class);
 });
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);

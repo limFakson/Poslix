@@ -24,6 +24,7 @@ class NotificationController extends Controller {
     public function store( StoreNotificationRequest $request ) {
         $tenantId = $request->input( 'tenant_id' );
         Config::set( 'tenant_id', $tenantId );
+
         $data = $request->all();
 
         if ( !isset( $data[ 'link' ] ) ) {

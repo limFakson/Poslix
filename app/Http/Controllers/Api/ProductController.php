@@ -40,43 +40,54 @@ class ProductController extends Controller {
         DB::purge( 'tenant' );
         DB::reconnect( 'tenant' );
 
-        $is_stock = DB::connection( 'tenant' )->table( 'general_settings' )->first( 'without_stock' )->without_stock;
-        if ( $is_stock != 'yes' ) {
-            if ( !$warehouseId ) {
-                return response( [ 'message'=>'Warehouse id is needed since you counting stock for products' ] );
-            }
+        // $is_stock = DB::connection( 'tenant' )->table( 'general_settings' )->first( 'without_stock' )->without_stock;
+        // if ( $is_stock != 'yes' ) {
+        //     if ( !$warehouseId ) {
+        //         return response( [ 'message'=>'Warehouse id is needed since you counting stock for products' ] );
+        //     }
 
-            $warehouse = DB::connection( 'tenant' )->table( 'warehouses' )->where( 'id', $warehouseId )->first();
-            if ( !$warehouse ) {
-                return response( [ 'message'=>'Warehosue not found' ], 404 );
-            }
+        //     $warehouse = DB::connection( 'tenant' )->table( 'warehouses' )->where( 'id', $warehouseId )->first();
+        //     if ( !$warehouse ) {
+        //         return response( [ 'message'=>'Warehosue not found' ], 404 );
+        //     }
 
-            $products = DB::connection( 'tenant' )->table( 'products' )
-            ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
-            ->leftjoin( 'product_warehouse', 'products.id', '=', 'product_warehouse.product_id' )
-            ->select(
-                'products.*',
-                'taxes.name as tax_name',
-                'taxes.rate as tax_rate',
-                'taxes.is_active as tax_is_active',
-                'product_warehouse.variant_id as variant_id',
-                'product_warehouse.qty as warehouse_qty'
-            )
-            ->where( 'product_warehouse.warehouse_id', $warehouseId )
-            ->where( 'products.is_active', true )
-            ->get();
-        } else {
-            $products = DB::connection( 'tenant' )->table( 'products' )
-            ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
-            ->select(
-                'products.*',
-                'taxes.name as tax_name',
-                'taxes.rate as tax_rate',
-                'taxes.is_active as tax_is_active'
-            )
-            ->where( 'products.is_active', true )
-            ->get();
-        }
+        //     $products = DB::connection( 'tenant' )->table( 'products' )
+        //     ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
+        //     ->leftjoin( 'product_warehouse', 'products.id', '=', 'product_warehouse.product_id' )
+        //     ->select(
+        //         'products.*',
+        //         'taxes.name as tax_name',
+        //         'taxes.rate as tax_rate',
+        //         'taxes.is_active as tax_is_active',
+        //         'product_warehouse.variant_id as variant_id',
+        //         'product_warehouse.qty as warehouse_qty'
+        // )
+        //     ->where( 'product_warehouse.warehouse_id', $warehouseId )
+        //     ->where( 'products.is_active', true )
+        //     ->get();
+        // } else {
+        //     $products = DB::connection( 'tenant' )->table( 'products' )
+        //     ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
+        //     ->select(
+        //         'products.*',
+        //         'taxes.name as tax_name',
+        //         'taxes.rate as tax_rate',
+        //         'taxes.is_active as tax_is_active'
+        // )
+        //     ->where( 'products.is_active', true )
+        //     ->get();
+        // }
+
+        $products = DB::connection( 'tenant' )->table( 'products' )
+        ->leftjoin( 'taxes', 'products.tax_id', '=', 'taxes.id' )
+        ->select(
+            'products.*',
+            'taxes.name as tax_name',
+            'taxes.rate as tax_rate',
+            'taxes.is_active as tax_is_active'
+        )
+        ->where( 'products.is_active', true )
+        ->get();
 
         $product_varients = DB::connection( 'tenant' )->table( 'product_variants' )->get();
         $extra = DB::connection( 'tenant' )->table( 'extras' )->get();
