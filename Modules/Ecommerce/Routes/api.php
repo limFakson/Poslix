@@ -16,3 +16,4 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/ecommerce', function (Request $request) {
     return $request->user();
 });
+

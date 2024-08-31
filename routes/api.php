@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\ReturnSaleController;
 use App\Http\Controllers\Api\VariantController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\landlord\UploadController;
+use Modules\Ecommerce\Http\Controllers\OrderController;
+use Modules\Ecommerce\Http\Controllers\AppearanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,6 +56,8 @@ Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('coupon', CouponController::class);
     Route::apiResource('giftcard', GiftCardController::class);
     Route::apiResource('warehouse/product', ProductWarehouseController::class);
+    Route::get('/order', [OrderController::class, 'orderapi']);
+    Route::get('/appearance', [AppearanceController::class, 'appearanceapi']);
 });
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);

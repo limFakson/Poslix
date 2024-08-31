@@ -116,7 +116,7 @@ class PosSettingsController extends Controller
         DB::purge('tenant');
         DB::reconnect('tenant');
 
-        $menu_setting = DB::connection('tenant')->table('menu_payment')
+        $menu_setting = DB::connection('tenant')->table('menu_payments')
         ->latest()
         ->first();
         $custom_menu = DB::connection('tenant')->table('custom_methods')
