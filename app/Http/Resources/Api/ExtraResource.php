@@ -4,9 +4,8 @@ namespace App\Http\Resources\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\Api\ExtraCollection;
 
-class ExtraCategoryResource extends JsonResource {
+class ExtraResource extends JsonResource {
     /**
     * Transform the resource into an array.
     *
@@ -16,10 +15,9 @@ class ExtraCategoryResource extends JsonResource {
     public function toArray( Request $request ): array {
         return [
             'id'=>$this->id,
-            'categoryName'=>$this->category_name,
-            'isMulti'=>$this->is_multi,
-            'laravelThroughKey'=>$this->laravel_through_key,
-            'extra'=>new ExtraCollection( $this->whenLoaded( 'extras' ) )
+            'name'=>$this->name,
+            'price'=>$this->price,
+            'createdAt'=>$this->crreated_at
         ];
     }
 }

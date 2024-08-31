@@ -82,6 +82,8 @@ class SaleController extends Controller
         DB::purge('tenant');
         DB::reconnect('tenant');
 
+        $gen_settings = DB::connection('tenant')->table('general_settings')->first();
+
         $saleDatas = $request->all();
         $saleDatas = array_filter($saleDatas, function($value) {
             return is_array($value);
@@ -171,55 +173,90 @@ class SaleController extends Controller
                 $productQuantity = $data['quantity'];
                 $product = DB::connection('tenant')->table('products')->where('id', $productId)->first();
 
-                if(isset($commonData['variant_id'])){
-                    $variantId = $commonData['variant_id'];
-                    $variant = DB::connection('tenant')->table('product_variants')
-                    ->where([
-                        ['variant_id', '=', $variantId],
-                        ['product_id', '=', $productId]
-                    ])
-                    ->first();
-
-                    $warehouse = DB::connection('tenant')->table('product_warehouse')
-                    ->where([
-                        ['variant_id', '=', $variantId],
-                        ['product_id', '=', $productId],
-                        ['warehouse_id', '=', $saleData['warehouseId']]
-                    ])
-                    ->first();
-
-                    $newQuantity = $variant->qty - $productQuantity;
-                    DB::connection('tenant')->table('product_variants')->where([
-                        ['variant_id', '=', $variantId],
-                        ['product_id', '=', $productId]
-                    ])->update(['qty' => $newQuantity]);
-
-                    $newQuantity = $warehouse->qty - $productQuantity;
-                    DB::connection('tenant')->table('product_warehouse')->where([
-                        ['variant_id', '=', $variantId],
-                        ['product_id', '=', $productId],
-                        ['warehouse_id', '=', $saleData['warehouseId']]
-                    ])->update(['qty' => $newQuantity]);
-                }else{
-                    $warehouse = DB::connection('tenant')->table('product_warehouse')
-                    ->where([
-                        ['product_id', '=', $productId],
-                        ['warehouse_id', '=', $saleData['warehouseId']]
-                    ])
-                    ->first();
-
-                    $newQuantity = $warehouse->qty - $productQuantity;
-                    DB::connection('tenant')->table('product_warehouse')->where([
-                        ['product_id', '=', $productId],
-                        ['warehouse_id', '=', $saleData['warehouseId']]
-                    ])->update(['qty' => $newQuantity]);
-
-                }
                 if (!$product) {
                     return response()->json(['error' => 'Product not found'], 404);
                 }
-                $newQuantity = $product->qty - $productQuantity;
-                DB::connection('tenant')->table('products')->where('id', $productId)->update(['qty' => $newQuantity]);
+
+                // check the settings set for without stock in the general settings
+                if($gen_settings->without_stock == "no"){
+                    // check if the product is a service to disable warehouse stock
+                    if($product->type != "service"){
+                    if(isset($commonData['variant_id'])){
+                        $variantId = $commonData['variant_id'];
+                        $variant = DB::connection('tenant')->table('product_variants')
+                        ->where([
+                            ['variant_id', '=', $variantId],
+                            ['product_id', '=', $productId]
+                        ])
+                        ->first();
+
+                        $warehouse = DB::connection('tenant')->table('product_warehouse')
+                        ->where([
+                            ['variant_id', '=', $variantId],
+                            ['product_id', '=', $productId],
+                            ['warehouse_id', '=', $saleData['warehouseId']]
+                        ])
+                        ->first();
+
+                        // check if requested product is in the warehouse
+                        if(!$warehouse){
+                            return response()->json(['message' => 'Product does not have stock for this particular variant in the warehouse'], 404);
+                        }
+
+                        // Check if requested quantity exceeds warehouse stock
+                        if ($productQuantity > $warehouse->qty) {
+                            return response()->json(['message' => 'Requested quantity exceeds available stock in the warehouse'], 400);
+                        }
+
+                        // Check if requested quantity exceeds product variant stock
+                        if ($productQuantity > $variant->qty) {
+                            return response()->json(['message' => 'Requested quantity exceeds available stock for this variant'], 400);
+                        }
+
+                        $newQuantity = $variant->qty - $productQuantity;
+                        DB::connection('tenant')->table('product_variants')->where([
+                            ['variant_id', '=', $variantId],
+                            ['product_id', '=', $productId]
+                        ])->update(['qty' => $newQuantity]);
+
+                        $newQuantity = $warehouse->qty - $productQuantity;
+                        DB::connection('tenant')->table('product_warehouse')->where([
+                            ['variant_id', '=', $variantId],
+                            ['product_id', '=', $productId],
+                            ['warehouse_id', '=', $saleData['warehouseId']]
+                        ])->update(['qty' => $newQuantity]);
+                    }else{
+                        $warehouse = DB::connection('tenant')->table('product_warehouse')
+                        ->where([
+                            ['product_id', '=', $productId],
+                            ['warehouse_id', '=', $saleData['warehouseId']]
+                        ])
+                        ->first();
+
+                        if(!$warehouse){
+                            return response()->json(['message' => 'Product does not have stock in this warehouse'], 404);
+                        }
+
+                        // Check if requested quantity exceeds warehouse stock
+                        if ($productQuantity > $warehouse->qty) {
+                            return response()->json(['message' => 'Requested quantity exceeds available stock in the warehouse'], 400);
+                        }
+
+                        $newQuantity = $warehouse->qty - $productQuantity;
+                        DB::connection('tenant')->table('product_warehouse')->where([
+                            ['product_id', '=', $productId],
+                            ['warehouse_id', '=', $saleData['warehouseId']]
+                        ])->update(['qty' => $newQuantity]);
+
+                    }
+                    // Check if requested quantity exceeds product stock
+                    if ($productQuantity > $product->qty) {
+                        return response()->json(['message' => 'Requested quantity exceeds total available stock for the product'], 400);
+                    }
+
+                    $newQuantity = $product->qty - $productQuantity;
+                    DB::connection('tenant')->table('products')->where('id', $productId)->update(['qty' => $newQuantity]);
+                }}
 
                 $productSaleId = DB::connection('tenant')->table('product_sales')->insertGetId($commonData);
                 $ProductSales[] = ["data"=>$commonData];

@@ -5,6 +5,7 @@ namespace Modules\Ecommerce\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use App\Models\landlord\Tenant;
+use App\Http\Resources\Api\AppearanceResource;
 use Illuminate\Routing\Controller;
 use Modules\Ecommerce\Entities\Appearance;
 use Auth;
@@ -55,10 +56,17 @@ class AppearanceController extends Controller {
         return back()->with( 'message', 'Saved successfully' );
     }
 
-    // public function appearanceApi( Request $request ) {
-    //     $appearance = Appearance::first();
-    //     return response( [ $appearance ] );
-    // }
+    public function appearanceApi( Request $request ) {
+        if ( !$request->filled( 'user_id' ) ) {
+            return response()->json( [
+                'message' => 'You need to pass user_id as a query parameter.'
+            ], 400 );
+        }
+        $user_id = $request->input( 'user_id' );
+
+        $appearance = Appearance::where( 'user_id', $user_id )->first();
+        return response()->json( new AppearanceResource( $appearance ), 200 );
+    }
 
     /**
     * Show the form for creating a new resource.

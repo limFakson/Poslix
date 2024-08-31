@@ -33,10 +33,6 @@
 		return redirect()->back();
 	});
 
-    Route::prefix('api')->group(function() {
-        Route::get('/order', [OrderController::class, 'orderapi'])->name('order.api');
-        Route::get('/appearance', [AppearanceController::class, 'appearanceapi'])->name('appearnace.api');
-    });
 
 	Route::post('/session-renew', [FrontController::class, 'sessionRenew'])->name('session');
 
