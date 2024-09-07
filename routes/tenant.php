@@ -95,11 +95,6 @@ Route::group(['middleware'=>['web', InitializeTenancyByDomain::class,PreventAcce
             dd('cleared');
         });
 
-
-        Route::get('/{any}', function () {
-            return File::get(public_path('web/index.html'));
-        })->where('any', '.*');
-
         Route::get('update-coupon', [CouponController::class, 'updateCoupon']);
 
         Auth::routes();

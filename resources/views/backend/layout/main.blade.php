@@ -1007,7 +1007,7 @@
     </div>
     <!-- Category Modal -->
   </div>
-  
+
   @if(!config('database.connections.saleprosaas_landlord'))
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
@@ -1128,16 +1128,16 @@
   @endif
 
   @livewireScripts
-<script>
+{{-- <script>
       var csrfToken = $('meta[name="csrf-token"]').attr('content');
-        console.log(csrfToken);
+        // console.log(csrfToken);
         // Set up jQuery to include the CSRF token in all AJAX requests
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': csrfToken
             }
         });
-  </script>
+  </script> --}}
   @stack('scripts')
   <script>
     if ('serviceWorker' in navigator) {
