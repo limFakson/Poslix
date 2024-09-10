@@ -19,8 +19,8 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
-        \App\Http\Middleware\Cors::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\Cors::class,
     ];
 
     /**
@@ -77,6 +77,8 @@ class Kernel extends HttpKernel
         'superadminauth' => \App\Http\Middleware\SuperAdminAuth::class,
         'cors' => \App\Http\Middleware\Cors::class,
         'tenant.init' => \App\Http\Middleware\InitializeTenancyByQueryParameter::class,
+        'tenant.auth' => \App\Http\Middleware\AuthTenantUser::class,
+        'verifyJwtTkn' => \App\Http\Middleware\VerifyJwtToken::class,
         // 'tenant.identification' => \App\Http\Middleware\TenantIdentification::class,
     ];
 

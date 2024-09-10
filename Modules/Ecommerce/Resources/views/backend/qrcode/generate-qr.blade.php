@@ -441,7 +441,6 @@
             });
 
             $('#qrCodeForm select').on('change', function() {
-                console.log($('input[name="table"]').text())
                 formChanged = true;
                 displayErrorOrQr()
             });
@@ -451,13 +450,11 @@
 
             function submitForm() {
                 if (!formChanged) return;
-                console.log('trigger')
                 formChanged = false;
 
                 // var formData = $('#qrCodeForm').serialize();
                 var form = $('#qrCodeForm')[0];
                 var formData = new FormData(form);
-                console.log($('#qrCodeForm').serialize())
                 // formData.append('size', $("input[name=size]").val();
                 // formData.append('backgroundColor', $("input[name=backgroundColor]").val());
                 // formData.append('foregroundColor', $("input[name=foregroundColor]").val());

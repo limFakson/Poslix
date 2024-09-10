@@ -46,7 +46,7 @@ Route::controller(DemoAutoUpdateController::class)->group(function () {
 
 
 
-Route::post('auth/login', [LoginController::class, 'Login']);
+Route::post('auth/login', [LoginController::class, 'Login'])->middleware('tenant.auth');
 Route::apiResource('product', ProductController::class);
 Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('variant', VariantController::class);

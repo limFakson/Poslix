@@ -228,7 +228,6 @@ class SecondProductController extends Controller {
     }
 
     public function menu_products( Request $request ) {
-        dd(GeneralSetting::first( 'without_stock' )->without_stock);
         if ( GeneralSetting::first( 'without_stock' )->without_stock != 'yes' ) {
             $warehouse_id = $request->input( 'warehouse_id' );
 

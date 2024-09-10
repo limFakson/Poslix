@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('apps', function (Blueprint $table) {
             $table->id();
             $table->string('file');
+            $table->string('version')->nullable();
+            $table->string('build')->nullable();
+            $table->string('signature')->nullable();
             $table->timestamps();
         });
     }

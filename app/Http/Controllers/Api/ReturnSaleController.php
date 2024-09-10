@@ -144,10 +144,18 @@ class ReturnSaleController extends Controller
                 ->where([
                     ['product_id', '=', $productId],
                     ['sale_id', '=', $returnData['saleId']],
+                ])->first();
+                $product_qty_return = $productsale->return_qty + $returnQuantity;
+
+                $productsale = DB::connection('tenant')->table('product_sales')
+                ->where([
+                    ['product_id', '=', $productId],
+                    ['sale_id', '=', $returnData['saleId']],
                 ])
                 ->update([
-                    'return_qty'=>$returnQuantity
-                ]);
+                    'return_qty'=>$product_qty_return
+                ]);;
+
 
                 if(isset($commonData['variant_id'])){
                     $variantId = $commonData['variant_id'];
@@ -200,7 +208,7 @@ class ReturnSaleController extends Controller
                 DB::connection('tenant')->table('products')->where('id', $productId)->update(['qty' => $newQuantity]);
 
                 $productSaleId = DB::connection('tenant')->table('product_returns')->insertGetId($commonData);
-                $Productreturns[] = ["data"=>$commonData];
+                $Productreturns[] = $commonData;
             }
 
             $returnid = DB::connection('tenant')->table('returns')->insertGetId($createData);
@@ -209,17 +217,40 @@ class ReturnSaleController extends Controller
             $sale_total_qty = $sale_data->total_qty - $returnData['totalQty'];
             $sale_total_price = $sale_data->total_price - $returnData['totalPrice'];
             $sale_grand_total = $sale_data->grand_total - $returnData['grandTotal'];
+            $sale_paid_price = $sale_total_price;
+
+            $payment = DB::connection('tenant')->table('payments')
+                ->select(['id', 'amount', 'change'])
+                ->where('sale_id', $returnData['saleId'])->first();
+
+             DB::connection('tenant')->table('payments')
+                    ->where('sale_id', $returnData['saleId'])
+                    ->update([
+                        'amount' => $sale_total_price,
+                        'change' => $sale_data->total_price - $sale_total_price,
+                    ]);
+
+
+
+            $saleReturnedStatus = 4;// total returned
+            $saleSemiReturnedStatus = 5;// semi returned
+
+            $newSaleStatus = ($sale_data->total_qty == $returnData['totalQty'] ? $saleReturnedStatus : $saleSemiReturnedStatus);
+
             DB::connection('tenant')->table('sales')->where('id', $returnData['saleId'])
             ->update([
-                'sale_status'=> 4,
+                'sale_status'=> $newSaleStatus,
                 'total_qty'=> $sale_total_qty,
                 'total_price'=> $sale_total_price,
-                'grand_total'=> $sale_grand_total
+                'grand_total'=> $sale_grand_total,
+                'paid_amount'=>$sale_paid_price
             ]);
-            $sale = ['id'=>$returnData['saleId'], 'saleStatus'=>4, 'totalQty'=>$sale_total_qty, 'totalPrice'=> $sale_total_price, 'grandTotal'=> $sale_grand_total];
+            $sale = ['id'=>$returnData['saleId'], 'saleStatus'=>$newSaleStatus, 'totalQty'=>$sale_total_qty, 'totalPrice'=> $sale_total_price, 'grandTotal'=> $sale_grand_total];
             event(new SaleEvent($sale, 'returnSaleUpdated', $tenantId));
 
             $processedreturns[] = ["Return:" => $createData, "Product_Return:"=>$Productreturns];
+
+
         }
 
 
@@ -266,199 +297,199 @@ class ReturnSaleController extends Controller
         ],201);
     }
 
-    public function update(StoreReturnRequest $request, $id)
-    {
-        $tenantId = $request->input('tenant_id');
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant) {
-            return response()->json(["message" => "Tenant not found"], 400);
-        }
+    // public function update(StoreReturnRequest $request, $id)
+    // {
+    //     $tenantId = $request->input('tenant_id');
+    //     $tenant = Tenant::find($tenantId);
+    //     if (!$tenant) {
+    //         return response()->json(["message" => "Tenant not found"], 400);
+    //     }
 
-        // Connected to the tenant database
-        $tenancyDb = $tenant->tenancy_db_name;
+    //     // Connected to the tenant database
+    //     $tenancyDb = $tenant->tenancy_db_name;
 
-        config(['database.connections.tenant' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => $tenancyDb,
-            'username' => config('app.db_username'),
-            'password' => config('app.db_password'),
-        ]]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
+    //     config(['database.connections.tenant' => [
+    //         'driver' => 'mysql',
+    //         'host' => 'localhost',
+    //         'database' => $tenancyDb,
+    //         'username' => config('app.db_username'),
+    //         'password' => config('app.db_password'),
+    //     ]]);
+    //     DB::purge('tenant');
+    //     DB::reconnect('tenant');
 
-        $return = DB::connection('tenant')->table('returns')->where('id', $id)->first();
-        if(!$return){
-            return response(["message"=>"Returns not in existence"]);
-        }
+    //     $return = DB::connection('tenant')->table('returns')->where('id', $id)->first();
+    //     if(!$return){
+    //         return response(["message"=>"Returns not in existence"]);
+    //     }
 
-        $returnData = $request->all();
-        $now = \Carbon\Carbon::now()->toDateTimeString();
+    //     $returnData = $request->all();
+    //     $now = \Carbon\Carbon::now()->toDateTimeString();
 
-        $updateData = [
-            'user_id' => $returnData['userId'] ?? null,
-            'reference_no' => $returnData['referenceNo'] ?? null,
-            'cash_register_id' => $returnData['cashregisterId'] ?? null,
-            'sale_id' => $returnData['saleId'] ?? null,
-            'customer_id' => $returnData['customerId']?? null,
-            'warehouse_id' => $returnData['warehouseId']?? null,
-            'currency_id' => $returnData['currencyId']?? null,
-            'biller_id' => $returnData['billerId']?? null,
-            'item' => $returnData['item']?? null,
-            'total_qty' => $returnData['totalQty'] ?? null,
-            'total_discount' => $returnData['totalDiscount']?? null,
-            'total_tax'=>$returnData['totalTax']?? null,
-            'total_price'=>$returnData['totalPrice']?? null,
-            'grand_total'=>$returnData['grandTotal']?? null,
-            'document'=>$returnData['document']?? null,
-            'exchange_rate'=>$returnData['exchangeRate']?? null,
-            'order_tax_rate'=>$returnData['orderTaxRate']?? null,
-            'order_tax'=>$returnData['orderTax']?? null,
-            'return_note'=>$returnData['returnNote']?? null,
-            'staff_note'=>$returnData['staffNote']?? null,
-            'created_at' => $now,
-            'updated_at' => $now
-        ];
+    //     $updateData = [
+    //         'user_id' => $returnData['userId'] ?? null,
+    //         'reference_no' => $returnData['referenceNo'] ?? null,
+    //         'cash_register_id' => $returnData['cashregisterId'] ?? null,
+    //         'sale_id' => $returnData['saleId'] ?? null,
+    //         'customer_id' => $returnData['customerId']?? null,
+    //         'warehouse_id' => $returnData['warehouseId']?? null,
+    //         'currency_id' => $returnData['currencyId']?? null,
+    //         'biller_id' => $returnData['billerId']?? null,
+    //         'item' => $returnData['item']?? null,
+    //         'total_qty' => $returnData['totalQty'] ?? null,
+    //         'total_discount' => $returnData['totalDiscount']?? null,
+    //         'total_tax'=>$returnData['totalTax']?? null,
+    //         'total_price'=>$returnData['totalPrice']?? null,
+    //         'grand_total'=>$returnData['grandTotal']?? null,
+    //         'document'=>$returnData['document']?? null,
+    //         'exchange_rate'=>$returnData['exchangeRate']?? null,
+    //         'order_tax_rate'=>$returnData['orderTaxRate']?? null,
+    //         'order_tax'=>$returnData['orderTax']?? null,
+    //         'return_note'=>$returnData['returnNote']?? null,
+    //         'staff_note'=>$returnData['staffNote']?? null,
+    //         'created_at' => $now,
+    //         'updated_at' => $now
+    //     ];
 
-        // Filter out null values
-        $updateData = array_filter($updateData, function($value) {
-            return !is_null($value);
-        });
+    //     // Filter out null values
+    //     $updateData = array_filter($updateData, function($value) {
+    //         return !is_null($value);
+    //     });
 
-        // Step 3: Handle Product Sales Update
-        $productsell = $returnData['productReturn'];
-        foreach ($productsell as $data) {
-            // Find existing product sale entry
-            $query = DB::connection('tenant')->table('product_returns')
-            ->where('return_id', $id)
-            ->where('product_id', $data['productId']);
+    //     // Step 3: Handle Product Sales Update
+    //     $productsell = $returnData['productReturn'];
+    //     foreach ($productsell as $data) {
+    //         // Find existing product sale entry
+    //         $query = DB::connection('tenant')->table('product_returns')
+    //         ->where('return_id', $id)
+    //         ->where('product_id', $data['productId']);
 
-            if (isset($data['variantId'])) {
-                $query->where('variant_id', $data['variantId']);
-            }
+    //         if (isset($data['variantId'])) {
+    //             $query->where('variant_id', $data['variantId']);
+    //         }
 
-            $existingProductSale = $query->first();
+    //         $existingProductSale = $query->first();
 
-            // Calculate quantity difference for stock adjustment
-            $quantityDifference = $data['quantity'] - ($existingProductSale->qty ?? 0);
+    //         // Calculate quantity difference for stock adjustment
+    //         $quantityDifference = $data['quantity'] - ($existingProductSale->qty ?? 0);
 
-            if ($existingProductSale) {
-                // Update existing product sale
-                DB::connection('tenant')->table('product_sales')
-                    ->where('id', $existingProductSale->id)
-                    ->update([
-                        'product_batch_id' => $data['productBatchId'] ?? $existingProductSale->product_batch_id,
-                        'variant_id' => $data['variantId'] ?? $existingProductSale->variant_id,
-                        'imei_number' => $data['imeiNumber'] ?? $existingProductSale->imei_number,
-                        'qty' => $data['quantity'],
-                        'sale_unit_id' => $data['saleUnitId'] ?? $existingProductSale->sale_unit_id,
-                        'net_unit_price' => $data['netUnitPrice'] ?? $existingProductSale->net_unit_price,
-                        'discount' => $data['discount'] ?? $existingProductSale->discount,
-                        'tax_rate' => $data['taxRate'] ?? $existingProductSale->tax_rate,
-                        'tax' => $data['tax'] ?? $existingProductSale->tax,
-                        'total' => $data['total'] ?? $existingProductSale->total,
-                        'updated_at' => $now
-                    ]);
-            } else {
-                $highestId = DB::connection('tenant')->table('product_returns')->max('id');
-                $newId = $highestId + 1;
+    //         if ($existingProductSale) {
+    //             // Update existing product sale
+    //             DB::connection('tenant')->table('product_sales')
+    //                 ->where('id', $existingProductSale->id)
+    //                 ->update([
+    //                     'product_batch_id' => $data['productBatchId'] ?? $existingProductSale->product_batch_id,
+    //                     'variant_id' => $data['variantId'] ?? $existingProductSale->variant_id,
+    //                     'imei_number' => $data['imeiNumber'] ?? $existingProductSale->imei_number,
+    //                     'qty' => $data['quantity'],
+    //                     'sale_unit_id' => $data['saleUnitId'] ?? $existingProductSale->sale_unit_id,
+    //                     'net_unit_price' => $data['netUnitPrice'] ?? $existingProductSale->net_unit_price,
+    //                     'discount' => $data['discount'] ?? $existingProductSale->discount,
+    //                     'tax_rate' => $data['taxRate'] ?? $existingProductSale->tax_rate,
+    //                     'tax' => $data['tax'] ?? $existingProductSale->tax,
+    //                     'total' => $data['total'] ?? $existingProductSale->total,
+    //                     'updated_at' => $now
+    //                 ]);
+    //         } else {
+    //             $highestId = DB::connection('tenant')->table('product_returns')->max('id');
+    //             $newId = $highestId + 1;
 
-                $commonData = [
-                    'id' => $newId,
-                    'return_id'=>$id,
-                    'product_id' => $data['productId'],
-                    'product_batch_id' => $data['productBatchId'] ?? null,
-                    'variant_id' => $data['variantId'] ?? null,
-                    'imei_number' => $data['imeiNumber'] ?? null,
-                    'qty' => $data['quantity'],
-                    'sale_unit_id' => $data['saleUnitId'] ?? null,
-                    'net_unit_price' => $data['netUnitPrice'] ?? null,
-                    'discount' => $data['discount'] ?? null,
-                    'tax_rate' => $data['taxRate'] ?? null,
-                    'tax' => $data['tax'] ?? null,
-                    'total' => $data['total'] ?? null,
-                    'created_at' => $now,
-                    'updated_at' => $now
-                ];
+    //             $commonData = [
+    //                 'id' => $newId,
+    //                 'return_id'=>$id,
+    //                 'product_id' => $data['productId'],
+    //                 'product_batch_id' => $data['productBatchId'] ?? null,
+    //                 'variant_id' => $data['variantId'] ?? null,
+    //                 'imei_number' => $data['imeiNumber'] ?? null,
+    //                 'qty' => $data['quantity'],
+    //                 'sale_unit_id' => $data['saleUnitId'] ?? null,
+    //                 'net_unit_price' => $data['netUnitPrice'] ?? null,
+    //                 'discount' => $data['discount'] ?? null,
+    //                 'tax_rate' => $data['taxRate'] ?? null,
+    //                 'tax' => $data['tax'] ?? null,
+    //                 'total' => $data['total'] ?? null,
+    //                 'created_at' => $now,
+    //                 'updated_at' => $now
+    //             ];
 
-                $commonData = array_filter($commonData, function ($value) {
-                    return !is_null($value);
-                });
+    //             $commonData = array_filter($commonData, function ($value) {
+    //                 return !is_null($value);
+    //             });
 
-                DB::connection('tenant')->table('product_sales')->insert($commonData);
-            }
+    //             DB::connection('tenant')->table('product_sales')->insert($commonData);
+    //         }
 
-            // Update stock levels in Product Warehouse and Product/Variant
-            $product = DB::connection('tenant')->table('products')
-                ->where('id', $data['productId'])
-                ->first();
+    //         // Update stock levels in Product Warehouse and Product/Variant
+    //         $product = DB::connection('tenant')->table('products')
+    //             ->where('id', $data['productId'])
+    //             ->first();
 
-            if ($product) {
-                DB::connection('tenant')->table('products')
-                    ->where('id', $data['productId'])
-                    ->update(['qty' => $product->qty + $quantityDifference]);
-            }
+    //         if ($product) {
+    //             DB::connection('tenant')->table('products')
+    //                 ->where('id', $data['productId'])
+    //                 ->update(['qty' => $product->qty + $quantityDifference]);
+    //         }
 
-            if (isset($data['variantId'])) {
-                $productVariant = DB::connection('tenant')->table('product_variants')
-                    ->where('product_id', $data['productId'])
-                    ->where('variant_id', $data['variantId'])
-                    ->first();
+    //         if (isset($data['variantId'])) {
+    //             $productVariant = DB::connection('tenant')->table('product_variants')
+    //                 ->where('product_id', $data['productId'])
+    //                 ->where('variant_id', $data['variantId'])
+    //                 ->first();
 
-                if ($productVariant) {
-                    DB::connection('tenant')->table('product_variants')
-                        ->where('product_id', $data['productId'])
-                        ->where('variant_id', $data['variantId'])
-                        ->update(['qty' => $productVariant->qty + $quantityDifference]);
-                }
+    //             if ($productVariant) {
+    //                 DB::connection('tenant')->table('product_variants')
+    //                     ->where('product_id', $data['productId'])
+    //                     ->where('variant_id', $data['variantId'])
+    //                     ->update(['qty' => $productVariant->qty + $quantityDifference]);
+    //             }
 
-                $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                ->where('warehouse_id', $return->warehouse_id)
-                ->where('product_id', $data['productId'])
-                ->where('variant_id', $data['varientId'])
-                ->first();
+    //             $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+    //             ->where('warehouse_id', $return->warehouse_id)
+    //             ->where('product_id', $data['productId'])
+    //             ->where('variant_id', $data['varientId'])
+    //             ->first();
 
-                if ($productWarehouse) {
-                    DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $return->warehouse_id)
-                        ->where('product_id', $data['productId'])
-                        ->where('variant_id', $data['varientId'])
-                        ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
-                }
-            } else {
-                $productWarehouse = DB::connection('tenant')->table('product_warehouse')
-                    ->where('warehouse_id', $return->warehouse_id)
-                    ->where('product_id', $data['productId'])
-                    ->first();
+    //             if ($productWarehouse) {
+    //                 DB::connection('tenant')->table('product_warehouse')
+    //                     ->where('warehouse_id', $return->warehouse_id)
+    //                     ->where('product_id', $data['productId'])
+    //                     ->where('variant_id', $data['varientId'])
+    //                     ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
+    //             }
+    //         } else {
+    //             $productWarehouse = DB::connection('tenant')->table('product_warehouse')
+    //                 ->where('warehouse_id', $return->warehouse_id)
+    //                 ->where('product_id', $data['productId'])
+    //                 ->first();
 
-                if ($productWarehouse) {
-                    DB::connection('tenant')->table('product_warehouse')
-                        ->where('warehouse_id', $return->warehouse_id)
-                        ->where('product_id', $data['productId'])
-                        ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
-                }
-            }
-        }
+    //             if ($productWarehouse) {
+    //                 DB::connection('tenant')->table('product_warehouse')
+    //                     ->where('warehouse_id', $return->warehouse_id)
+    //                     ->where('product_id', $data['productId'])
+    //                     ->update(['qty' => $productWarehouse->qty + $quantityDifference]);
+    //             }
+    //         }
+    //     }
 
-        DB::connection('tenant')->table('returns')->where('id', $id)->update($updateData);
-        DB::connection('tenant')->table('sales')->where('id', $return->sale_id)->update(['sale_status'=> 4]);
+    //     DB::connection('tenant')->table('returns')->where('id', $id)->update($updateData);
+    //     DB::connection('tenant')->table('sales')->where('id', $return->sale_id)->update(['sale_status'=> 4]);
 
-        // Step 5: Return updated sale and product sale information
-        $return = DB::connection('tenant')->table('returns')
-        ->where('id',$id)
-        ->first();
-        $product_returns = DB::connection('tenant')->table('product_returns')
-        ->where('return_id',$id)
-        ->get();
+    //     // Step 5: Return updated sale and product sale information
+    //     $return = DB::connection('tenant')->table('returns')
+    //     ->where('id',$id)
+    //     ->first();
+    //     $product_returns = DB::connection('tenant')->table('product_returns')
+    //     ->where('return_id',$id)
+    //     ->get();
 
-        $saleResources = new ReturnSaleResource($return);
-        $productSaleResources = new ProductReturnsCollection($product_returns);
+    //     $saleResources = new ReturnSaleResource($return);
+    //     $productSaleResources = new ProductReturnsCollection($product_returns);
 
-        return response()->json([
-            'return_sale' => $saleResources,
-            'product_return' => $productSaleResources
-        ], 201);
-    }
+    //     return response()->json([
+    //         'return_sale' => $saleResources,
+    //         'product_return' => $productSaleResources
+    //     ], 201);
+    // }
 
     public function destroy($product)
     {
