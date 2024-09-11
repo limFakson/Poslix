@@ -10,8 +10,17 @@ use Illuminate\Support\Facades\Auth;
 
 class JwtAuthMiddleware {
 
-    public function handle( $request, Closure $next ) {
+    /**
+    * Handle an incoming request.
+    *
+    * @param  \Closure( \Illuminate\Http\Request ): ( \Symfony\Component\HttpFoundation\Response )  $next
+    */
+
+    public function __construct() {
         JwtHelper::init();
+    }
+
+    public function handle( $request, Closure $next ) {
 
         // Get token from the Authorization header
         $token = $request->bearerToken();

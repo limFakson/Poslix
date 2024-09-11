@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\Api\UserCollection;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller {
@@ -26,8 +27,9 @@ class LoginController extends Controller {
     // Get authenticated user
 
     public function me(Request $request) {
-        $user = $request->user;
-        return response()->json(['userId'=>$user->id, 'name'=>$user->name]);
+        $name = $request->user;
+        $user = User::where('name', $name->id)->first();
+        return response()->json(['user'=>['userId'=>$user->id, 'name'=>$user->name, 'phone'=>$user->phone]]);
     }
 
     // Refresh JWT token
