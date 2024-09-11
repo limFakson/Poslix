@@ -22,7 +22,7 @@ class UploadController extends Controller {
         $signature = $request->sign;
 
         $filename = pathinfo( $file->getClientOriginalName(), PATHINFO_FILENAME ).'_'.time().'.'.$file->getClientOriginalExtension();
-        $request->file->move( 'public/assets', $filename );
+        $request->file->move( public_path('asset'), $filename );
 
         $count = App::count();
 
@@ -50,7 +50,7 @@ class UploadController extends Controller {
     }
 
     public function download( $filename ) {
-        $filePath = public_path( 'assets/' . $filename );
+        $filePath = public_path( 'asset/' . $filename );
 
         if ( file_exists( $filePath ) ) {
             return response()->download( $filePath );
@@ -105,12 +105,12 @@ class UploadController extends Controller {
     </channel>
 </rss>';
 
-        // Return the response with XML headers
-        return response( $xmlString, 200 )
-        ->header( 'Content-Type', 'application/xml' );
-    }
+// Return the response with XML headers
+return response( $xmlString, 200 )
+->header( 'Content-Type', 'application/xml' );
+}
 
-    public function external() {
-        return view( 'asset.dist.index' );
-    }
+public function external() {
+return view( 'asset.dist.index' );
+}
 }

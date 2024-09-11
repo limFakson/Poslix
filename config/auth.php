@@ -44,8 +44,7 @@ return [
         'api' => [
             'driver' => 'jwt',
             'provider' => 'users',
-            'hash' => false,
-        ]
+        ],
     ],
 
     /*
@@ -113,5 +112,7 @@ return [
     */
 
     'password_timeout' => 10800,
+
+    'secret_key' => env('JWT_SECRET', 1 )
 
 ];

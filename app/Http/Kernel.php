@@ -78,7 +78,7 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
         'tenant.init' => \App\Http\Middleware\InitializeTenancyByQueryParameter::class,
         'tenant.auth' => \App\Http\Middleware\AuthTenantUser::class,
-        'verifyJwtTkn' => \App\Http\Middleware\VerifyJwtToken::class,
+        'jwt.auth' => \App\Http\Middleware\JwtAuthMiddleware::class,
         // 'tenant.identification' => \App\Http\Middleware\TenantIdentification::class,
     ];
 

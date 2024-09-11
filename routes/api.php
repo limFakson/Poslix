@@ -44,9 +44,8 @@ Route::controller(DemoAutoUpdateController::class)->group(function () {
     Route::get('fetch-data-bugs', 'fetchDataForBugs')->name('fetch-data-bugs');
 });
 
-
-
 Route::post('auth/login', [LoginController::class, 'Login'])->middleware('tenant.auth');
+
 Route::apiResource('product', ProductController::class);
 Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('variant', VariantController::class);
@@ -58,7 +57,13 @@ Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('warehouse/product', ProductWarehouseController::class);
     Route::get('/order', [OrderController::class, 'orderapi']);
     Route::get('/appearance', [AppearanceController::class, 'appearanceapi']);
+    Route::middleware(['jwt.auth'])->group( function () {
+        Route::get('me', [LoginController::class, 'me']);
+        Route::post('logout', [LoginController::class, 'logout']);
+    });
 });
+
+
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);
 Route::apiResource('category', CategoryController::class);
@@ -92,7 +97,8 @@ Route::get('/config-cache', function() {
 Route::get('/check-env', function() {
     return response()->json([
         'URL' => env('APP_URL'),
-        'APP_NAME' => env('APP_NAME')
+        'APP_NAME' => env('APP_NAME'),
+        'exp' => config( 'jwt.ttl')
     ]);
 });
 
