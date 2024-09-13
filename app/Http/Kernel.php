@@ -43,7 +43,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             \App\Http\Middleware\EncryptCookies::class,
-            \Illuminate\Session\Middleware\StartSession::class,
+            // \Illuminate\Session\Middleware\StartSession::class,
             // 'throttle:60,1',
             EnsureFrontendRequestsAreStateful::class,
             \App\Http\Middleware\Cors::class,

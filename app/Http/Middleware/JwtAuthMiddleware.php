@@ -21,6 +21,7 @@ class JwtAuthMiddleware {
     }
 
     public function handle( $request, Closure $next ) {
+        dd( $request );
 
         // Get token from the Authorization header
         $token = $request->bearerToken();
@@ -32,7 +33,7 @@ class JwtAuthMiddleware {
         // Decode the token
         $decoded = JwtHelper::decode( $token );
 
-        if ( !$decoded ) {
+        if ( !isset( $decoded->user ) ) {
             return response()->json( [ 'error' => 'Invalid or expired token' ], 401 );
         }
 

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\Auth;
 
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Biller;
 use App\Traits\JwtHelper;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use App\Models\landlord\Domain;
 use App\Models\landlord\Tenant;
@@ -29,7 +31,17 @@ class LoginController extends Controller {
     public function me(Request $request) {
         $name = $request->user;
         $user = User::where('name', $name->id)->first();
-        return response()->json(['user'=>['userId'=>$user->id, 'name'=>$user->name, 'phone'=>$user->phone]]);
+        $data = [];
+        if ($user->role_id < 5){
+            $warehouse = Warehouse::where('id', $user->warehouse_id)->first();
+            $biller = Biller::where('id', $user->biller_id)->first();
+            $data["warehouseId"] = $warehouse->id;
+            $data["warehouseName"] = $warehouse->name;
+            $data["warehouseAddress"] = $warehouse->address;
+            $data["billerId"] = $biller->id;
+            $data["billerName"] = $biller->name;
+        }
+        return response()->json(['user'=>['userId'=>$user->id, 'name'=>$user->name, 'phone'=>$user->phone], "details"=>$data]);
     }
 
     // Refresh JWT token
@@ -73,13 +85,13 @@ class LoginController extends Controller {
             return response()->json(['error' => 'Invalid credentials'], 400);
         }
 
-        if($user->is_active == false){
-            return response()->json(['message'=>'logged in but id is not activated'], 400);
-        }
-
         // check user permission
         if ($user->role_id >= 5){
             return response()->json(['error' => 'User does not have permission to access this application'], 401);
+        }
+
+        if($user->is_active == false){
+            return response()->json(['message'=>'logged in but id is not activated'], 400);
         }
 
         try {

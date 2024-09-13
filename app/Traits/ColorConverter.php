@@ -29,9 +29,9 @@ trait ColorConverter {
         if ( $opacity ) {
             if ( abs( $opacity ) > 1 )
             $opacity = 1.0;
-            $output = 'rgba(' . implode( ',', $rgb ) . ',' . $opacity . ')';
+            $output = 'rgba(' . implode( ', ', $rgb ) . ',' . $opacity . ')';
         } else {
-            $output = 'rgb(' . implode( ',', $rgb ) . ')';
+            $output = 'rgb(' . implode( ', ', $rgb ) . ')';
         }
 
         return $output;

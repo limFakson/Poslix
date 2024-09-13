@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Traits\JwtHelper;
+use App\Models\Customer;
 use App\Models\User;
 
 class MenuAuthController extends Controller {
@@ -26,7 +27,7 @@ class MenuAuthController extends Controller {
                 'name' => 'required|string',
                 'email' => 'required|string|email',
                 'password' => 'required|string',
-                'phone' => 'required|integer',
+                'phone' => 'required|string',
             ]);
 
         } catch (ValidationException $e) {
@@ -37,7 +38,12 @@ class MenuAuthController extends Controller {
             ], 422);
         }
 
-        // dd('guy');
+        $existingUser = User::on('tenant')->where('name', $validatedData['name'])->first();
+
+        if($existingUser){
+            return response()->json(["message"=>"name already exists"], 400);
+        }
+
         // Create new customer uesr
         $user = User::on('tenant')->create( [
             'name' => $validatedData[ 'name' ],
@@ -45,8 +51,15 @@ class MenuAuthController extends Controller {
             'password' => Hash::make( $validatedData[ 'password' ] ),
             'phone' => $validatedData[ 'phone' ],
             'role_id' => 5,
-            'is_active' => 0
+            'is_active' => false,
+            'is_deleted'=>false
         ] );
+
+        $data['name'] = $validatedData[ 'name' ];
+        $data['phone'] = $validatedData[ 'phone' ];
+        $data['user_id'] = $user->id;
+        $data['is_active'] = true;
+        Customer::on('tenant')->create($data);
 
         // Get tenant_id from the session or middleware
         $tenantId = session('tenant_id');
@@ -69,13 +82,21 @@ class MenuAuthController extends Controller {
 
     public function login( Request $request ) {
         // Validate input
-        $request->validate( [
-            'identifier' => 'required|string',
-            'password' => 'required|string',
-        ] );
+        try {
+            $request->validate( [
+                'identifier' => 'required|string',
+                'password' => 'required|string',
+            ] );
 
-        $identifier = $request->input( 'identifier' );
-        $password = $request->input( 'password' );
+            $identifier = $request->input( 'identifier' );
+            $password = $request->input( 'password' );
+        }catch (ValidationException $e) {
+            // Catch and return validation error response
+            return response()->json([
+                'message' => 'Validation errors',
+                'errors' => $e->errors()
+            ], 422);
+        }
 
         // Fetch user from the tenant's database
         $user = User::on('tenant')->where('name', $identifier)->first();
@@ -101,6 +122,7 @@ class MenuAuthController extends Controller {
             $token = JwtHelper::encode(['user' => ['id' => $user->name]]);
 
             return response()->json([
+                'tenantId' => $tenantId,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => 60 * 60 * 12,

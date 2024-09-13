@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\DomainExpansion;
 use App\Http\Controllers\Api\ApiOverviewController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MenuAuthController;
@@ -50,6 +51,7 @@ Route::middleware('tenant.auth')->prefix('auth')->group(function () {
     // Digital menu authentication
     Route::post('menu/register', [MenuAuthController::class, 'register']);
     Route::post('menu/login', [MenuAuthController::class, 'login']);
+    Route::post('menu/domain', [DomainExpansion::class, 'getTenantId']);
 });
 
 
