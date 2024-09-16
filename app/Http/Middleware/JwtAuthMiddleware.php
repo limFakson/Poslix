@@ -21,14 +21,14 @@ class JwtAuthMiddleware {
     }
 
     public function handle( $request, Closure $next ) {
-        dd( $request );
 
-        // Get token from the Authorization header
-        $token = $request->bearerToken();
+        $token = $request->header( 'Authorization' );
 
-        if ( !$token ) {
+        if ( !$token || !preg_match( '/Bearer\s(\S+)/', $token, $matches ) ) {
             return response()->json( [ 'error' => 'Token not provided' ], 401 );
         }
+
+        $token = $matches[ 1 ];
 
         // Decode the token
         $decoded = JwtHelper::decode( $token );
@@ -50,7 +50,7 @@ class JwtAuthMiddleware {
     }
 
     protected function verifyUser( $user ) {
-        $user = User::where( 'name', $user->id )->first();
+        $user = User::where( 'id', $user->id )->first();
 
         if ( !$user ) {
             Log::error( 'Invalid token: User not found' );

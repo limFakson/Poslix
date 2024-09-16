@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Biller;
+use App\Models\Customer;
 use App\Traits\JwtHelper;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\Api\UserCollection;
+use App\Http\Resources\Api\CustomerResource;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller {
@@ -30,7 +32,7 @@ class LoginController extends Controller {
 
     public function me(Request $request) {
         $name = $request->user;
-        $user = User::where('name', $name->id)->first();
+        $user = User::where('id', $name->id)->first();
         $data = [];
         if ($user->role_id < 5){
             $warehouse = Warehouse::where('id', $user->warehouse_id)->first();
@@ -40,7 +42,11 @@ class LoginController extends Controller {
             $data["warehouseAddress"] = $warehouse->address;
             $data["billerId"] = $biller->id;
             $data["billerName"] = $biller->name;
+        }else{
+            $customer_data = Customer::where('user_id', $user->id)->first();
+            $data = new CustomerResource($customer_data);
         }
+
         return response()->json(['user'=>['userId'=>$user->id, 'name'=>$user->name, 'phone'=>$user->phone], "details"=>$data]);
     }
 
@@ -96,7 +102,7 @@ class LoginController extends Controller {
 
         try {
             // Generate the JWT token
-            $token = JwtHelper::encode(['user' => ['id' => $user->name]]);
+            $token = JwtHelper::encode(['user' => ['id' => $user->id]]);
 
 
             // Get tenant_id from the session or middleware

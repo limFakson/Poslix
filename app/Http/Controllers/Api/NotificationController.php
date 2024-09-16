@@ -51,7 +51,7 @@ class NotificationController extends Controller {
         return response()->json( new NotificationResource( $responce ), 202 );
     }
 
-    public function update( StoreNotificationRequest $request, $notiId ) {
+    public function update( Request $request, $notiId ) {
         $tenantId = $request->input( 'tenant_id' );
         Config::set( 'tenant_id', $tenantId );
         $data = $request->all();
@@ -65,25 +65,12 @@ class NotificationController extends Controller {
             ], 400 );
         }
 
-        if ( !is_bool( $data[ 'isViewed' ] ) ) {
-            return response()->json( [
-                'error' => [
-                    'isViewed' => [ 'is viewed must be a boolean' ]
-                ]
-            ], 400 );
-        }
-
-        if ( !is_integer( $data[ 'viewedBy' ] ) ) {
-            return response()->json( [
-                'error' => [
-                    'viewedBy' => [ 'viewed by must be an integer' ]
-                ]
-            ], 400 );
-        }
-
         $notify_data = MenuNotification::find( $notiId );
         if ( !$notify_data ) {
             return response()->json( [ 'message' => 'Notification does not exist' ], 404 );
+        }
+        if ( !$notify_data->isViewed ) {
+            return response()->json( [ 'message' => 'Notification has been marked already' ], 400 );
         }
 
         if ( isset( $data[ 'table' ] ) ) {

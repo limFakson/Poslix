@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
+use App\Models\CustomerGroup;
 use Illuminate\Http\Request;
 use App\Traits\JwtHelper;
 use App\Models\Customer;
@@ -38,10 +39,10 @@ class MenuAuthController extends Controller {
             ], 422);
         }
 
-        $existingUser = User::on('tenant')->where('name', $validatedData['name'])->first();
+        $existingUser = User::on('tenant')->where([['name', $validatedData['name']], ['email', $validatedData['email']]])->first();
 
         if($existingUser){
-            return response()->json(["message"=>"name already exists"], 400);
+            return response()->json(["message"=>"user already exists"], 400);
         }
 
         // Create new customer uesr
@@ -55,9 +56,13 @@ class MenuAuthController extends Controller {
             'is_deleted'=>false
         ] );
 
+        $customer_group = CustomerGroup::on('tenant')->where('name', 'general')->select('id')->first();
+
         $data['name'] = $validatedData[ 'name' ];
+        $data['email'] = $validatedData[ 'email' ];
         $data['phone'] = $validatedData[ 'phone' ];
         $data['user_id'] = $user->id;
+        $data['customer_group_id'] = $customer_group->id;
         $data['is_active'] = true;
         Customer::on('tenant')->create($data);
 
@@ -69,7 +74,7 @@ class MenuAuthController extends Controller {
         }
 
         // Generate token for authenticated user
-        $token = JwtHelper::encode(['user' => ['id' => $user->name]]);
+        $token = JwtHelper::encode(['user' => ['id' => $user->id]]);
 
         return response()->json( [
             'tenantId' => $tenantId,
@@ -99,7 +104,7 @@ class MenuAuthController extends Controller {
         }
 
         // Fetch user from the tenant's database
-        $user = User::on('tenant')->where('name', $identifier)->first();
+        $user = User::on('tenant')->where('email', $identifier)->first();
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
@@ -119,7 +124,7 @@ class MenuAuthController extends Controller {
 
         try {
             // Generate the JWT token
-            $token = JwtHelper::encode(['user' => ['id' => $user->name]]);
+            $token = JwtHelper::encode(['user' => ['id' => $user->id]]);
 
             return response()->json([
                 'tenantId' => $tenantId,
