@@ -42,8 +42,8 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \App\Http\Middleware\EncryptCookies::class,
-            \Illuminate\Session\Middleware\StartSession::class,
+            // \App\Http\Middleware\EncryptCookies::class,
+            // \Illuminate\Session\Middleware\StartSession::class,
             // 'throttle:60,1',
             EnsureFrontendRequestsAreStateful::class,
             \App\Http\Middleware\Cors::class,
@@ -76,9 +76,9 @@ class Kernel extends HttpKernel
         'common' => \App\Http\Middleware\Common::class,
         'superadminauth' => \App\Http\Middleware\SuperAdminAuth::class,
         'cors' => \App\Http\Middleware\Cors::class,
+        'jwtAuth' => \App\Http\Middleware\JwtAuthMiddleware::class,
         'tenant.init' => \App\Http\Middleware\InitializeTenancyByQueryParameter::class,
         'tenant.auth' => \App\Http\Middleware\AuthTenantUser::class,
-        'verifyJwtTkn' => \App\Http\Middleware\VerifyJwtToken::class,
         // 'tenant.identification' => \App\Http\Middleware\TenantIdentification::class,
     ];
 

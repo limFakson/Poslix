@@ -8,8 +8,10 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\DomainExpansion;
 use App\Http\Controllers\Api\ApiOverviewController;
 use App\Http\Controllers\Api\Auth\LoginController;
+use App\Http\Controllers\Api\Auth\MenuAuthController;
 use App\Http\Controllers\Api\PosSettingsController;
 use App\Http\Controllers\Api\GenSettingsController;
 use App\Http\Controllers\Api\BillerController;
@@ -44,11 +46,18 @@ Route::controller(DemoAutoUpdateController::class)->group(function () {
     Route::get('fetch-data-bugs', 'fetchDataForBugs')->name('fetch-data-bugs');
 });
 
+Route::middleware('tenant.auth')->prefix('auth')->group(function () {
+    Route::post('login', [LoginController::class, 'Login']);
+    // Digital menu authentication
+    Route::post('menu/register', [MenuAuthController::class, 'register']);
+    Route::post('menu/login', [MenuAuthController::class, 'login']);
+    Route::post('menu/domain', [DomainExpansion::class, 'getTenantId']);
+});
 
 
-Route::post('auth/login', [LoginController::class, 'Login'])->middleware('tenant.auth');
 Route::apiResource('product', ProductController::class);
-Route::middleware(['tenant.init'])->group(function () {
+Route::group(['middleware'=>['tenant.init']], function () {
+    // other....
     Route::apiResource('variant', VariantController::class);
     Route::apiResource('notification', NotificationController::class);
     Route::apiResource('action-button', ButtonController::class);
@@ -58,7 +67,12 @@ Route::middleware(['tenant.init'])->group(function () {
     Route::apiResource('warehouse/product', ProductWarehouseController::class);
     Route::get('/order', [OrderController::class, 'orderapi']);
     Route::get('/appearance', [AppearanceController::class, 'appearanceapi']);
+    Route::group(['middleware' => ['jwtAuth']], function () {
+        Route::get('auth/me', [LoginController::class, 'me']);
+    });
 });
+
+
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('customer', CustomerController::class);
 Route::apiResource('category', CategoryController::class);
@@ -98,5 +112,3 @@ Route::get('/check-env', function() {
 
 // Route::get('/grant-privileges', [DatabaseController::class, 'grantPrivileges']);
 Route::get('/xml-response', [UploadController::class, 'xmlDoc']);
-
-Route::get('dom', [TableController::class, 'domtoPdf']);

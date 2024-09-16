@@ -2,53 +2,59 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\User;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Models\Biller;
+use App\Models\Customer;
+use App\Traits\JwtHelper;
+use App\Models\Warehouse;
+use Illuminate\Http\Request;
+use App\Models\landlord\Domain;
+use App\Models\landlord\Tenant;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\landlord\Tenant;
 use Illuminate\Support\Facades\Hash;
-use App\Models\landlord\Domain;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
+use App\Http\Resources\Api\UserCollection;
+use App\Http\Resources\Api\CustomerResource;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller {
-    // User registration
-    // public function register( Request $request )
-    // {
-    //     $validatedData = $request->validate( [
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|string|email|max:255|unique:users',
-    //         'password' => 'required|string|min:6|confirmed',
-    // ] );
-
-    //     $user = User::create( [
-    //         'name' => $validatedData[ 'name' ],
-    //         'email' => $validatedData[ 'email' ],
-    //         'password' => Hash::make( $validatedData[ 'password' ] ),
-    // ] );
-
-    //     $token = JWTAuth::fromUser( $user );
-
-    //     return response()->json( [ 'token' => $token ] );
-    // }
-
-    // User login
+    // initialized JwtHelper to boot static
+    public function __construct()
+    {
+        JwtHelper::init();
+    }
 
     // Get authenticated user
 
-    public function me() {
-        return response()->json( Auth::user() );
+    public function me(Request $request) {
+        $name = $request->user;
+        $user = User::where('id', $name->id)->first();
+        $data = [];
+        if ($user->role_id < 5){
+            $warehouse = Warehouse::where('id', $user->warehouse_id)->first();
+            $biller = Biller::where('id', $user->biller_id)->first();
+            $data["warehouseId"] = $warehouse->id;
+            $data["warehouseName"] = $warehouse->name;
+            $data["warehouseAddress"] = $warehouse->address;
+            $data["billerId"] = $biller->id;
+            $data["billerName"] = $biller->name;
+        }else{
+            $customer_data = Customer::where('user_id', $user->id)->first();
+            $data = new CustomerResource($customer_data);
+        }
+
+        return response()->json(['user'=>['userId'=>$user->id, 'name'=>$user->name, 'phone'=>$user->phone], "details"=>$data]);
     }
 
     // Refresh JWT token
 
-    public function refresh() {
-        return response()->json( [ 'token' => Auth::refresh() ] );
-    }
+    // public function refresh() {
+    //     return response()->json( [ 'token' => Auth::refresh() ] );
+    // }
 
     // User logout
 
@@ -56,6 +62,8 @@ class LoginController extends Controller {
         Auth::logout();
         return response()->json( [ 'message' => 'Successfully logged out' ] );
     }
+
+    // User login
 
     public function login( Request $request ) {
         // Validate input
@@ -75,27 +83,46 @@ class LoginController extends Controller {
         $user = User::on('tenant')->where('name', $identifier)->first();
 
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 401);
+            return response()->json(['error' => 'User not found'], 404);
         }
 
         // Verify the password
         if (!Hash::check($password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Invalid credentials'], 400);
         }
 
-        // Generate JWT Token for the user
-        if (!$token = Auth::guard('api')->login($user)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        // check user permission
+        if ($user->role_id >= 5){
+            return response()->json(['error' => 'User does not have permission to access this application'], 401);
         }
 
-        dd($user);
+        if($user->is_active == false){
+            return response()->json(['message'=>'logged in but id is not activated'], 400);
+        }
 
-        return response()->json([
-            'tenantId' => $user->tenant_id,
-            'userId' => $user->id,
-            'token' => $token,
-            'timezone' => config('app.timezone'),
-        ], 200, ['Content-Type' => 'application/json' ] );
+        try {
+            // Generate the JWT token
+            $token = JwtHelper::encode(['user' => ['id' => $user->id]]);
+
+
+            // Get tenant_id from the session or middleware
+            $tenantId = session('tenant_id');
+
+            if (!$tenantId) {
+                return response()->json(['error' => 'Tenant not found in session'], 404);
+            }
+
+            return response()->json([
+                'tenantId' => $tenantId,
+                'token' => $token,
+                'token_type' => 'Bearer',
+                'expires_in' => 60 * 60 * 12,
+                'timezone' => config('app.timezone'),
+            ], 200, ['Content-Type' => 'application/json']);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Could not create token', 'message' => $e->getMessage()], 500);
+        }
     }
 
 }

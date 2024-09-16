@@ -56,6 +56,9 @@ class AuthTenantUser {
             return response()->json( [ 'error' => 'Failed to connect to tenant database' ], 500 );
         }
 
+        // Save tenant_id in session for future requests
+        session( [ 'tenant_id' => $tenantId ] );
+
         // Proceed with the request
         return $next( $request );
     }

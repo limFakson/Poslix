@@ -10,43 +10,31 @@ use App\Http\Resources\Api\TableResource;
 use App\Http\Resources\Api\TableCollection;
 use Mpdf\Mpdf;
 
-class TableController extends Controller
-{
+class TableController extends Controller {
     //
-    public function index(Request $request)
-    {
-        $tenantId = $request->input('tenant_id');
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant){
-            return response()->json(["message"=> "Tenant not found"], 400);
+
+    public function index( Request $request ) {
+        $tenantId = $request->input( 'tenant_id' );
+        $tenant = Tenant::find( $tenantId );
+        if ( !$tenant ) {
+            return response()->json( [ 'message'=> 'Tenant not found' ], 400 );
         }
         // Connected to the tenant database
         $tenancyDb = $tenant->tenancy_db_name;
 
-        config(['database.connections.tenant' => [
+        config( [ 'database.connections.tenant' => [
             'driver' => 'mysql',
             'host' => 'localhost',
             'database' => $tenancyDb,
-            'username' => config('app.db_username'),
-            'password' => config('app.db_password'),
-        ]]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
+            'username' => config( 'app.db_username' ),
+            'password' => config( 'app.db_password' ),
+        ] ] );
+        DB::purge( 'tenant' );
+        DB::reconnect( 'tenant' );
 
-        $table = DB::connection('tenant')->table('tables')
+        $table = DB::connection( 'tenant' )->table( 'tables' )
         ->get();
 
-        return new TableCollection($table);
-    }
-
-    public function domToPdf()
-    {
-        $newpdf = new Mpdf();
-
-        $html = view('asset.file')->render();
-        $newpdf->WriteHTML($html);
-        $newpdf->Output();
-
-        return $newpdf;
+        return new TableCollection( $table );
     }
 }
