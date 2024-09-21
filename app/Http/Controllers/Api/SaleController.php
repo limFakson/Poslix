@@ -19,9 +19,13 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $tenantId = $request->input('tenant_id');
+        $warehouse_id = $request->input('warehouse_id');
         $tenant = Tenant::find($tenantId);
         if (!$tenant){
             return response()->json(["message"=> "Tenant not found"], 400);
+        }
+        if (!$warehouse_id){
+            return response()->json(["message"=> "Warehouse id not found"], 400);
         }
 
         $tenancyDb = $tenant->tenancy_db_name;
@@ -37,6 +41,7 @@ class SaleController extends Controller
         DB::reconnect('tenant');
 
         $sales = DB::connection('tenant')->table('sales')
+        ->where('warehouse_id', $warehouse_id)
         ->leftjoin('customers', 'sales.customer_id', '=', 'customers.id')
         ->select(
             'sales.*',

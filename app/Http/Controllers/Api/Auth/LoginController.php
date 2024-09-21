@@ -37,11 +37,15 @@ class LoginController extends Controller {
         if ($user->role_id < 5){
             $warehouse = Warehouse::where('id', $user->warehouse_id)->first();
             $biller = Biller::where('id', $user->biller_id)->first();
-            $data["warehouseId"] = $warehouse->id;
-            $data["warehouseName"] = $warehouse->name;
-            $data["warehouseAddress"] = $warehouse->address;
-            $data["billerId"] = $biller->id;
-            $data["billerName"] = $biller->name;
+            if($warehouse){
+                $data["warehouseId"] = $warehouse->id;
+                $data["warehouseName"] = $warehouse->name;
+                $data["warehouseAddress"] = $warehouse->address;
+            }
+            if($biller){
+                $data["billerId"] = $biller->id;
+                $data["billerName"] = $biller->name;
+            }
         }else{
             $customer_data = Customer::where('user_id', $user->id)->first();
             $data = new CustomerResource($customer_data);
@@ -117,6 +121,7 @@ class LoginController extends Controller {
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => 60 * 60 * 12,
+                'userId'=>$user->id,
                 'timezone' => config('app.timezone'),
             ], 200, ['Content-Type' => 'application/json']);
 

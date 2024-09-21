@@ -3,6 +3,7 @@
 namespace Modules\Ecommerce\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
+use App\Http\Resources\Api\OrderResource;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -27,40 +28,13 @@ class OrderController extends Controller {
         return view( 'backend.setting.order_setting', compact( 'dine', 'pickup', 'delivery' ) );
     }
 
-    // public function orderapi( Request $request ) {
-    //     $userId = $request->input( 'user_id' );
-    //     $tenantId = $request->input( 'tenant_id' );
-    //     $tenant = Tenant::find( $tenantId );
-    //     if ( !$tenant ) {
-    //         return response()->json( [ 'message'=> 'Tenant not found' ], 404 );
-    //     } else if ( !$userId ) {
-    //         return response()->json( [ 'message'=> 'User id is needed to be passed as (user_id)' ], 404 );
-    //     }
-    //     ;
-
-    //     // Connected to the tenant database
-    //     $tenancyDb = $tenant->tenancy_db_name;
-
-    //     config( [ 'database.connections.tenant' => [
-    //         'driver' => 'mysql',
-    //         'host' => 'localhost',
-    //         'database' => $tenancyDb,
-    //         'username' => config( 'app.db_username' ),
-    //         'password' => config( 'app.db_password' ),
-    // ] ] );
-    //     DB::purge( 'tenant' );
-    //     DB::reconnect( 'tenant' );
-    //     $userid = DB::connection( 'tenant' )->table( 'users' )->where( 'id', $userId )->first();
-    //     if ( !$userid ) {
-    //         return response()->json( [ 'message'=> 'User not found' ], 404 );
-    //     }
-
-    //     $dine = DB::connection( 'tenant' )->table( 'orders' )->where( 'user_id', $userId )->where( 'name', 'dine' )->first();
-    //     $pickup = DB::connection( 'tenant' )->table( 'orders' )->where( 'user_id', $userId )->where( 'name', 'pickup' )->first();
-    //     $delivery = DB::connection( 'tenant' )->table( 'orders' )->where( 'user_id', $userId )->where( 'name', 'delivery' )->first();
-    //     $data = [ 'dine'=>$dine, 'pickup'=>$pickup, 'delivery'=>$delivery ];
-    //     return response( $data );
-    // }
+    public function orderapi( Request $request ) {
+        $dine = Order::where( 'name', 'dine' )->first();
+        $pickup = Order::where( 'name', 'pickup' )->first();
+        $delivery = Order::where( 'name', 'delivery' )->first();
+        $data = [ 'dine'=>new OrderResource( $dine ), 'pickup'=>new OrderResource( $pickup ), 'delivery'=>new OrderResource( $delivery ) ];
+        return response( $data );
+    }
 
     public function orderSettingStore( Request $request ) {
         $datas = [
